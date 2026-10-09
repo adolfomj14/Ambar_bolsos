@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>ÁMBAR Admin — Panel de Administración</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1648,16 +1651,23 @@ function persistData() {
    INIT
 =================================================== */
 function init() {
-  // 1. Intentar cargar desde localStorage primero (cambios guardados en el navegador)
+  // En Netlify / servidor web, siempre priorizamos window.CATALOG_DATA fresco recién traído de products.js
   let savedLocal = null;
-  try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (raw) savedLocal = JSON.parse(raw);
-  } catch(e) {
-    console.warn('No se pudo leer localStorage:', e);
+  const isLocalFile = window.location.protocol === 'file:';
+  if (isLocalFile) {
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (raw) savedLocal = JSON.parse(raw);
+    } catch(e) {
+      console.warn('No se pudo leer localStorage:', e);
+    }
   }
 
-  if (savedLocal && savedLocal.products && savedLocal.products.length) {
+  if (window.CATALOG_DATA && !isLocalFile) {
+    adminData = JSON.parse(JSON.stringify(window.CATALOG_DATA));
+    adminData.settings = Object.assign({}, DEFAULT_DATA.settings, adminData.settings);
+    persistData();
+  } else if (savedLocal && savedLocal.products && savedLocal.products.length) {
     adminData = savedLocal;
     adminData.settings = Object.assign({}, DEFAULT_DATA.settings, adminData.settings);
   } else if (window.CATALOG_DATA) {
@@ -1892,9 +1902,18 @@ function buildImageSlots() {
 }
 
 function updateSlotPreview(i) {
-  const url = document.getElementById(`slot-url-${i}`).value.trim();
+  const inputEl = document.getElementById(`slot-url-${i}`);
+  let url = inputEl.value.trim();
+  if (url.includes('\\')) {
+    url = url.replace(/\\/g, '/');
+    inputEl.value = url;
+  }
   const box = document.getElementById(`slot-preview-${i}`);
   if (url) {
+    if (/\.heic$/i.test(url)) {
+      box.innerHTML = `<span class="slot-num">${i + 1}</span><div class="img-placeholder" style="color:#c53030"><div class="ph">⚠️</div><div style="font-size:.68rem;padding:0 2px;line-height:1.2">HEIC no soportado en web.<br>Usá .jpg</div></div>`;
+      return;
+    }
     box.innerHTML = `<span class="slot-num">${i + 1}</span><img src="${escHtml(url)}" onerror="this.parentElement.innerHTML='<span class=\\'slot-num\\'>${i + 1}</span><div class=\\'img-placeholder\\'><div class=\\'ph\\'>❌</div><div>URL inválida</div></div>'" />`;
   } else {
     box.innerHTML = `<span class="slot-num">${i + 1}</span><div class="img-placeholder"><div class="ph">🖼</div><div>Vacío</div></div>`;
@@ -2006,7 +2025,12 @@ function onStockTypeChange() {
 }
 
 function update360Preview() {
-  const raw = document.getElementById('ed-frames360').value;
+  const textarea = document.getElementById('ed-frames360');
+  let raw = textarea.value;
+  if (raw.includes('\\')) {
+    raw = raw.replace(/\\/g, '/');
+    textarea.value = raw;
+  }
   const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
   const count = lines.length;
 
@@ -2047,13 +2071,13 @@ function saveProduct() {
   // Images
   const images = [];
   for (let i = 0; i < 6; i++) {
-    const url = document.getElementById(`slot-url-${i}`).value.trim();
+    const url = document.getElementById(`slot-url-${i}`).value.trim().replace(/\\/g, '/');
     if (url) images.push(url);
   }
 
   // 360 frames
   const raw360 = document.getElementById('ed-frames360').value;
-  const images360 = raw360.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const images360 = raw360.split('\n').map(l => l.trim().replace(/\\/g, '/')).filter(l => l.length > 0);
 
   // Material & dims
   const material = document.getElementById('ed-material').value.split('\n').map(l => l.trim()).filter(l => l);

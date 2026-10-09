@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>MARA — Bolsos de Diseño</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -140,9 +143,7 @@
       background: var(--cream);
       box-shadow: 0 -30px 70px rgba(33,22,18,.12);
       border-top: 1px solid rgba(227,214,203,.7);
-      will-change: transform, opacity, filter;
       transform-origin: center top;
-      transition: filter .1s ease-out;
     }
     .section-header { text-align: center; padding: 5rem 2rem 3rem; }
     .section-label  { font-size: .72rem; letter-spacing: .28em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; }
@@ -156,9 +157,11 @@
     ========================================================= */
     .product-card {
       background: var(--white); cursor: pointer; overflow: hidden;
-      position: relative; transform-style: preserve-3d;
+      position: relative;
       transition: box-shadow .4s var(--ease), transform .4s var(--ease);
-      will-change: transform;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
     }
     .product-card:hover {
       box-shadow: 0 20px 45px rgba(140,74,47,.18) !important;
@@ -176,8 +179,16 @@
       transition: transform .75s cubic-bezier(.4,0,.2,1);
     }
     .product-image-wrap { position: relative; aspect-ratio: 4/5; overflow: hidden; background: #ede9e0; }
-    .product-image-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .65s var(--ease); }
-    .product-card:hover .product-image-wrap img { transform: scale(1.09); }
+    .product-image-wrap img {
+      width: 100%; height: 100%; object-fit: cover;
+      transform: translate3d(0, 0, 0);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: auto;
+      transition: transform .65s var(--ease);
+    }
+    .product-card:hover .product-image-wrap img { transform: scale(1.08) translate3d(0, 0, 0); }
     .product-badge { position: absolute; top: 1rem; left: 1rem; background: var(--black); color: var(--white); font-size: .62rem; letter-spacing: .15em; text-transform: uppercase; padding: .3rem .8rem; }
     .product-badge.stock-low  { background: #c8800a; }
     .product-badge.stock-out  { background: #c0392b; }
@@ -223,13 +234,54 @@
     .gallery-tab-btn.hidden { display: none; }
 
     /* Photo gallery */
-    .gallery-photos { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .modal-main-img-wrap { flex: 1; overflow: hidden; cursor: zoom-in; position: relative; min-height: 300px; }
-    .modal-main-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .1s ease, opacity .2s ease; will-change: transform; user-select: none; }
-    .zoom-hint { position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,.5); color: #fff; padding: .32rem .75rem; border-radius: 50px; font-size: .68rem; letter-spacing: .08em; pointer-events: none; transition: opacity .3s; }
+    .gallery-photos { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .modal-main-img-wrap { flex: 1; overflow: hidden; cursor: zoom-in; position: relative; min-height: 300px; touch-action: pan-y; }
+    .modal-main-img-wrap.zoomed { touch-action: none; cursor: grab; }
+    .modal-main-img-wrap.zoomed:active { cursor: grabbing; }
+    .modal-main-img-wrap img { width: 100%; height: 100%; object-fit: cover; transform: translate3d(0, 0, 0); -webkit-backface-visibility: hidden; backface-visibility: hidden; image-rendering: -webkit-optimize-contrast; image-rendering: auto; transition: transform .1s ease, opacity .2s ease; will-change: transform; user-select: none; -webkit-user-drag: none; }
+    .zoom-hint { position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,.5); color: #fff; padding: .32rem .75rem; border-radius: 50px; font-size: .68rem; letter-spacing: .08em; pointer-events: none; transition: opacity .3s; z-index: 9; }
     .modal-main-img-wrap.zoomed .zoom-hint { opacity: 0; }
-    .modal-thumbs { display: flex; gap: 3px; padding: 3px; background: var(--white); }
-    .modal-thumb { flex: 1; aspect-ratio: 1; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: var(--t); }
+    @media (hover: none) { .zoom-hint { display: none; } }
+
+    /* Gallery nav arrows & mobile controls */
+    .gallery-nav-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(255,255,255,0.88); backdrop-filter: blur(6px);
+      border: 1px solid rgba(0,0,0,0.08); color: var(--black);
+      font-size: 1.4rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 8; transition: var(--t);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      user-select: none;
+    }
+    .gallery-nav-btn:hover { background: var(--white); color: var(--gold); }
+    .gallery-nav-btn.prev { left: .75rem; }
+    .gallery-nav-btn.next { right: .75rem; }
+    .modal-main-img-wrap.zoomed .gallery-nav-btn { opacity: 0; pointer-events: none; }
+
+    .gallery-counter {
+      position: absolute; bottom: .75rem; left: .75rem;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      color: #fff; font-size: .7rem; font-weight: 600; letter-spacing: .06em;
+      padding: .25rem .65rem; border-radius: 50px; z-index: 8; pointer-events: none;
+      transition: opacity .3s ease;
+    }
+    .modal-main-img-wrap.zoomed .gallery-counter { opacity: 0; }
+
+    .mobile-zoom-btn {
+      position: absolute; bottom: .75rem; right: .75rem;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(6px);
+      border: 1px solid rgba(0,0,0,0.1); color: var(--black);
+      font-size: .9rem; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 9; transition: var(--t);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    }
+    .mobile-zoom-btn:hover, .mobile-zoom-btn.active { background: var(--gold); color: #fff; }
+
+    .modal-thumbs { display: flex; gap: 4px; padding: 6px; background: var(--white); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .modal-thumbs::-webkit-scrollbar { display: none; }
+    .modal-thumb { flex: 0 0 54px; aspect-ratio: 1; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: var(--t); border-radius: 3px; }
     .modal-thumb.on { border-color: var(--gold); }
     .modal-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
     .modal-thumb:hover img { transform: scale(1.12); }
@@ -237,7 +289,7 @@
     /* 360° viewer */
     .gallery-360 { flex: 1; display: none; flex-direction: column; }
     .gallery-360.on { display: flex; }
-    .v360-wrap { flex: 1; position: relative; overflow: hidden; cursor: grab; user-select: none; min-height: 300px; background: #ede9e0; }
+    .v360-wrap { flex: 1; position: relative; overflow: hidden; cursor: grab; user-select: none; min-height: 300px; background: #ede9e0; touch-action: none; }
     .v360-wrap.dragging { cursor: grabbing; }
     .v360-img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; display: block; transition: opacity .15s; }
     .v360-hint { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; transition: opacity .5s; }
@@ -409,9 +461,9 @@
 
 
 
-    /* ── Cursor glow (desktop only) — Ilumina todo el sitio (hero + catálogo) ── */
+    /* ── Cursor glow (desktop only) ───────────────────────── */
     .cursor-glow {
-      position: fixed; pointer-events: none; z-index: 25; border-radius: 50%;
+      position: fixed; pointer-events: none; z-index: 1; border-radius: 50%;
       width: 500px; height: 500px;
       background: radial-gradient(circle, rgba(140, 73, 47, 0.137) 0%, transparent 68%);
       transform: translate(-50%, -50%);
@@ -485,7 +537,7 @@
 </header>
 
 <!-- ================================================================
-     HERO (filled dynamically)
+     HERO (filled dynamically)  
 ================================================================ -->
 <section class="hero" id="heroSection">
   <div class="hero-text">
@@ -502,7 +554,7 @@
     </div>
   </div>
   <div class="hero-image">
-    <img id="heroImg" src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&q=88" alt="Bolso estrella">
+    <img id="heroImg" src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&q=88" alt="Bolso estrella" fetchpriority="high" decoding="async">
     <div class="hero-badge">
       <p>Pieza estrella</p>
       <strong id="heroBadgeText">Mara Classic · $180 USD</strong>
@@ -567,6 +619,10 @@
       <div class="modal-main-img-wrap" id="mainImgWrap">
         <img id="mainImg" src="" alt="" draggable="false">
         <span class="zoom-hint">🔍 Hover para zoom</span>
+        <button class="gallery-nav-btn prev" id="galleryPrev" aria-label="Foto anterior" onclick="navGallery(-1)">‹</button>
+        <button class="gallery-nav-btn next" id="galleryNext" aria-label="Foto siguiente" onclick="navGallery(1)">›</button>
+        <div class="gallery-counter" id="galleryCounter">1 / 1</div>
+        <button class="mobile-zoom-btn" id="mobileZoomBtn" aria-label="Ampliar imagen" onclick="toggleMobileZoomBtn()">🔍</button>
       </div>
       <div class="modal-thumbs" id="thumbsRow"></div>
     </div>
@@ -640,7 +696,7 @@
 <script>
 /* ─── DEFAULTS (si products.js no está disponible) ──────────────── */
 const DEFAULT_SETTINGS = {
-  brandName:'ÁMBAR', tagline:'BOLSOS & CARTERAS · Colección 2024',
+  brandName:'ÁMBAR', tagline:'BOLSOS & CARTERAS · Colección 2026',
   logoImage:'assets/logo.jpg',
   heroTitle:'El bolso que complementa tu esencia', heroTitleHighlight:'esencia',
   heroSubtitle:'Diseños exclusivos y acabados refinados. Cada cartera ÁMBAR es una pieza creada para realzar tu estilo y acompañar cada instante con distinción.',
@@ -654,25 +710,29 @@ const DEFAULT_SETTINGS = {
   igBannerTitle:'Descubrí el universo ÁMBAR',
   igBannerText:'Inspiración, lanzamientos exclusivos y la comunidad que comparte nuestro amor por los bolsos y carteras.',
   catalogTitle:'Bolsos & Carteras', catalogSubtitle:'Colección Selecta',
-  footerText:'ÁMBAR · Bolsos & Carteras · © 2024 · Todos los derechos reservados'
+  footerText:'ÁMBAR · Bolsos & Carteras · © 2026 · Todos los derechos reservados'
 };
 const DEFAULT_PRODUCTS = [];
 
-/* ─── LOAD DATA (Sincronizado con admin y localStorage) ───────── */
+/* ─── LOAD DATA (Prioriza window.CATALOG_DATA de products.js) ───────── */
 const LOCAL_STORAGE_KEY = 'AMBAR_CATALOG_DATA_V1';
 let localStoreData = null;
 try {
   const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
   if (raw) localStoreData = JSON.parse(raw);
 } catch(e) {
-  console.warn('Error leyendo localStorage en catalogo:', e);
+  console.warn('Error leyendo localStorage:', e);
 }
 
-const activeCatalog = (localStoreData && localStoreData.products) ? localStoreData : window.CATALOG_DATA;
+// Fuente de verdad: lo recién subido en products.js (window.CATALOG_DATA)
+const activeCatalog = (typeof window.CATALOG_DATA !== 'undefined' && window.CATALOG_DATA && window.CATALOG_DATA.products && window.CATALOG_DATA.products.length)
+  ? window.CATALOG_DATA
+  : ((localStoreData && localStoreData.products && localStoreData.products.length) ? localStoreData : (window.CATALOG_DATA || { settings: DEFAULT_SETTINGS, products: DEFAULT_PRODUCTS }));
+
 const S = (activeCatalog && activeCatalog.settings) ? activeCatalog.settings : DEFAULT_SETTINGS;
 const RAW_PRODUCTS = (activeCatalog && activeCatalog.products) ? activeCatalog.products : DEFAULT_PRODUCTS;
 // Only show visible products
-const products = RAW_PRODUCTS.filter(p => p.visible !== false);
+let products = RAW_PRODUCTS.filter(p => p.visible !== false);
 
 // Escuchar cambios de localStorage en tiempo real si el admin está abierto en otra pestaña
 window.addEventListener('storage', e => {
@@ -737,16 +797,33 @@ function stockLabel(p) {
   return '✔ Disponible';
 }
 
+/* ─── IMAGE PRELOADER ON HOVER / TOUCH ──────────────────────────── */
+const preloadedProductIds = new Set();
+function preloadProduct(id) {
+  if (preloadedProductIds.has(id)) return;
+  preloadedProductIds.add(id);
+  const prod = products.find(p => p.id === id);
+  if (!prod || !prod.images) return;
+  prod.images.slice(1).forEach(src => {
+    if (src) {
+      const im = new Image();
+      im.decoding = 'async';
+      im.src = src;
+    }
+  });
+}
+
 /* ─── RENDER CARDS ──────────────────────────────────────────────── */
 function renderCards() {
   const grid = document.getElementById('productGrid');
   grid.innerHTML = products.map((p, i) => {
     const st = stockStatus(p);
     const has360 = p.images360 && p.images360.length >= 3;
+    const isPriority = i < 2;
     return `
-    <div class="product-card reveal" style="transition-delay:${i * .08}s" onclick="openModal(${p.id})">
+    <div class="product-card reveal" style="transition-delay:${i * .08}s" onclick="openModal(${p.id})" onmouseenter="preloadProduct(${p.id})" ontouchstart="preloadProduct(${p.id})">
       <div class="product-image-wrap">
-        <img src="${p.images && p.images[0] || ''}" alt="${p.name}" loading="lazy">
+        <img src="${p.images && p.images[0] || ''}" alt="${p.name}" ${isPriority ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
         ${p.badge ? `<span class="product-badge${st==='low'?' stock-low':st==='out'?' stock-out':''}">${p.badge}</span>` : (st !== 'ok' ? `<span class="product-badge ${st==='low'?'stock-low':'stock-out'}">${stockLabel(p)}</span>` : '')}
         ${has360 ? '<span class="badge-360">360°</span>' : ''}
         <div class="product-overlay"></div>
@@ -855,33 +932,95 @@ function switchGalleryTab(tab) {
   }
 }
 
-/* ─── IMAGE SWITCHER ────────────────────────────────────────────── */
+/* ─── IMAGE SWITCHER & GALLERY NAVIGATION ───────────────────────── */
+function navGallery(direction) {
+  if (!curProduct || !curProduct.images || curProduct.images.length <= 1) return;
+  const nextIdx = (curIdx + direction + curProduct.images.length) % curProduct.images.length;
+  setImage(nextIdx);
+}
+
 function setImage(idx) {
-  curIdx = idx;
+  if (!curProduct || !curProduct.images || !curProduct.images.length) return;
+  curIdx = ((idx % curProduct.images.length) + curProduct.images.length) % curProduct.images.length;
   const img = document.getElementById('mainImg');
   img.style.opacity = '0';
-  img.style.transform = 'scale(1)';
   clearZoom();
-  setTimeout(() => { img.src = curProduct.images[idx]; img.style.opacity = '1'; }, 140);
-  document.querySelectorAll('.modal-thumb').forEach((t, i) => t.classList.toggle('on', i === idx));
+  setTimeout(() => {
+    img.src = curProduct.images[curIdx];
+    img.style.opacity = '1';
+  }, 130);
+  document.querySelectorAll('.modal-thumb').forEach((t, i) => t.classList.toggle('on', i === curIdx));
+
+  const total = curProduct.images.length;
+  const counterEl = document.getElementById('galleryCounter');
+  if (counterEl) {
+    counterEl.textContent = `${curIdx + 1} / ${total}`;
+    counterEl.style.display = total > 1 ? 'block' : 'none';
+  }
+  const prevBtn = document.getElementById('galleryPrev');
+  const nextBtn = document.getElementById('galleryNext');
+  if (prevBtn && nextBtn) {
+    prevBtn.style.display = total > 1 ? 'flex' : 'none';
+    nextBtn.style.display = total > 1 ? 'flex' : 'none';
+  }
 }
+
 function buildThumbs() {
-  document.getElementById('thumbsRow').innerHTML = (curProduct.images||[]).map((src, i) => `
+  const images = curProduct.images || [];
+  const thumbsRow = document.getElementById('thumbsRow');
+  thumbsRow.style.display = images.length > 1 ? 'flex' : 'none';
+  thumbsRow.innerHTML = images.map((src, i) => `
     <div class="modal-thumb${i===0?' on':''}" onclick="setImage(${i})">
-      <img src="${src}" alt="Vista ${i+1}" loading="lazy">
+      <img src="${src}" alt="Vista ${i+1}" loading="lazy" decoding="async">
     </div>`).join('');
 }
 
-/* ─── ZOOM (cursor-tracking) ────────────────────────────────────── */
+/* ─── DUAL ZOOM SYSTEM (Desktop Mouse Tracking + Mobile Touch & Double Tap) ── */
 const mainWrap = document.getElementById('mainImgWrap');
 const mainImg  = document.getElementById('mainImg');
+
+let isZoomed = false;
+let currentScale = 1;
+let originX = 50;
+let originY = 50;
+
 function clearZoom() {
+  isZoomed = false;
+  currentScale = 1;
+  originX = 50;
+  originY = 50;
   mainImg.style.transform = 'scale(1)';
-  mainImg.style.transformOrigin = 'center';
-  mainImg.style.transition = 'transform .3s ease, opacity .15s ease';
+  mainImg.style.transformOrigin = '50% 50%';
+  mainImg.style.transition = 'transform .28s ease, opacity .15s ease';
   mainWrap.classList.remove('zoomed');
+  const zBtn = document.getElementById('mobileZoomBtn');
+  if (zBtn) { zBtn.innerHTML = '🔍'; zBtn.classList.remove('active'); }
 }
+
+function zoomAt(xPercent, yPercent, scale = 2.4) {
+  isZoomed = true;
+  currentScale = scale;
+  originX = Math.max(0, Math.min(100, xPercent));
+  originY = Math.max(0, Math.min(100, yPercent));
+  mainImg.style.transformOrigin = `${originX}% ${originY}%`;
+  mainImg.style.transform = `scale(${currentScale})`;
+  mainImg.style.transition = 'transform .26s cubic-bezier(.2,.8,.25,1)';
+  mainWrap.classList.add('zoomed');
+  const zBtn = document.getElementById('mobileZoomBtn');
+  if (zBtn) { zBtn.innerHTML = '✕'; zBtn.classList.add('active'); }
+}
+
+function toggleMobileZoomBtn() {
+  if (isZoomed) {
+    clearZoom();
+  } else {
+    zoomAt(50, 50, 2.3);
+  }
+}
+
+// 1. DESKTOP: Mouse movement tracks coordinates
 mainWrap.addEventListener('mousemove', e => {
+  if (!window.matchMedia('(hover: hover)').matches) return;
   const r = mainWrap.getBoundingClientRect();
   const x = ((e.clientX - r.left) / r.width) * 100;
   const y = ((e.clientY - r.top) / r.height) * 100;
@@ -890,15 +1029,131 @@ mainWrap.addEventListener('mousemove', e => {
   mainImg.style.transition = 'transform .08s ease';
   mainWrap.classList.add('zoomed');
 });
-mainWrap.addEventListener('mouseleave', clearZoom);
-mainWrap.addEventListener('click', () => {
-  if (window.innerWidth >= 768) return;
-  mainWrap.classList.contains('zoomed') ? clearZoom() : (() => {
-    mainImg.style.transformOrigin = '50% 30%';
-    mainImg.style.transform = 'scale(2)';
-    mainImg.style.transition = 'transform .3s ease';
-    mainWrap.classList.add('zoomed');
-  })();
+
+mainWrap.addEventListener('mouseleave', () => {
+  if (window.matchMedia('(hover: hover)').matches) {
+    clearZoom();
+  }
+});
+
+// 2. MOBILE: Touch Gestures (Swipe, Double Tap, Pinch-Zoom, Pan)
+let touchStartX = 0;
+let touchStartY = 0;
+let touchStartTime = 0;
+let lastTapTime = 0;
+let pinchStartDist = 0;
+let isPinching = false;
+let isSwiping = false;
+
+mainWrap.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchStartTime = Date.now();
+    isSwiping = !isZoomed;
+    isPinching = false;
+  } else if (e.touches.length === 2) {
+    isPinching = true;
+    isSwiping = false;
+    pinchStartDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+  }
+}, { passive: true });
+
+mainWrap.addEventListener('touchmove', e => {
+  if (isPinching && e.touches.length === 2) {
+    if (e.cancelable) e.preventDefault();
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const factor = dist / pinchStartDist;
+    const newScale = Math.max(1, Math.min(3.6, currentScale * factor));
+    mainImg.style.transform = `scale(${newScale})`;
+    mainImg.style.transition = 'none';
+    if (newScale > 1.15) {
+      isZoomed = true;
+      mainWrap.classList.add('zoomed');
+      const zBtn = document.getElementById('mobileZoomBtn');
+      if (zBtn) { zBtn.innerHTML = '✕'; zBtn.classList.add('active'); }
+    }
+    return;
+  }
+
+  if (isZoomed && e.touches.length === 1) {
+    // Pan smoothly across details while zoomed
+    if (e.cancelable) e.preventDefault();
+    const r = mainWrap.getBoundingClientRect();
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    originX = Math.max(0, Math.min(100, originX - (dx / r.width) * 45));
+    originY = Math.max(0, Math.min(100, originY - (dy / r.height) * 45));
+    mainImg.style.transformOrigin = `${originX}% ${originY}%`;
+    mainImg.style.transition = 'none';
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    return;
+  }
+
+  if (!isZoomed && isSwiping && e.touches.length === 1) {
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) + 5 && Math.abs(dx) > 12) {
+      if (e.cancelable) e.preventDefault();
+    }
+  }
+}, { passive: false });
+
+mainWrap.addEventListener('touchend', e => {
+  if (isPinching) {
+    isPinching = false;
+    const tf = mainImg.style.transform;
+    const match = tf.match(/scale\(([^)]+)\)/);
+    const scale = match ? parseFloat(match[1]) : 1;
+    if (scale < 1.25) {
+      clearZoom();
+    } else {
+      currentScale = scale;
+      isZoomed = true;
+    }
+    return;
+  }
+
+  if (e.changedTouches.length === 1) {
+    const touch = e.changedTouches[0];
+    const now = Date.now();
+    const dt = now - touchStartTime;
+    const dx = touch.clientX - touchStartX;
+    const dy = touch.clientY - touchStartY;
+
+    // Double tap detection: Zoom where touched
+    const tapInterval = now - lastTapTime;
+    if (tapInterval < 320 && tapInterval > 40 && Math.abs(dx) < 20 && Math.abs(dy) < 20) {
+      if (e.cancelable) e.preventDefault();
+      if (isZoomed) {
+        clearZoom();
+      } else {
+        const r = mainWrap.getBoundingClientRect();
+        const tapX = ((touch.clientX - r.left) / r.width) * 100;
+        const tapY = ((touch.clientY - r.top) / r.height) * 100;
+        zoomAt(tapX, tapY, 2.3);
+      }
+      lastTapTime = 0;
+      return;
+    }
+    lastTapTime = now;
+
+    // Horizontal swipe gesture (only when not zoomed)
+    if (!isZoomed && Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(dy) * 1.3 && dt < 450) {
+      if (dx < 0) {
+        navGallery(1);  // Swipe left -> Next
+      } else {
+        navGallery(-1); // Swipe right -> Previous
+      }
+    }
+  }
 });
 
 /* ─── 360° VIEWER CLASS ─────────────────────────────────────────── */
@@ -1155,23 +1410,17 @@ window.addEventListener('scroll', () => {
       scrollIndicatorEl.style.opacity = Math.max(1 - scrollY / 100, 0);
     }
 
-    /* 2. CATÁLOGO: Cuando estás arriba está en profundidad, opaco y desenfocado;
-          conforme bajas emerge a la superficie con nitidez absoluta (y viceversa al subir) */
+    /* 2. CATÁLOGO: Transición limpia de elevación sin degradar la nitidez de las fotos */
     if (catalogSec) {
-      if (progress < 1) {
-        // En zona de transición:
-        // progress = 0  -> opacity: 0.35, blur: 5px, scale: 0.965, translateY: 30px
-        // progress = 1  -> opacity: 1,    blur: 0px, scale: 1,     translateY: 0px
-        const catOpacity = 0.35 + (progress * 0.65);
-        const catBlur    = (1 - progress) * 5;
-        const catScale   = 0.965 + (progress * 0.035);
-        const catY       = (1 - progress) * 28;
-
-        catalogSec.style.opacity   = catOpacity.toFixed(3);
-        catalogSec.style.filter    = catBlur > 0.1 ? `blur(${catBlur.toFixed(1)}px)` : 'none';
-        catalogSec.style.transform = `translateY(${catY.toFixed(1)}px) scale(${catScale.toFixed(3)})`;
+      if (window.innerWidth >= 768 && progress < 1) {
+        // En desktop: elevación y opacidad suave; NUNCA aplicar blur ni scale a las fotos del catálogo
+        const catOpacity = 0.88 + (progress * 0.12);
+        const catY       = (1 - progress) * 18;
+        catalogSec.style.opacity   = catOpacity.toFixed(2);
+        catalogSec.style.filter    = 'none';
+        catalogSec.style.transform = `translateY(${catY.toFixed(1)}px)`;
       } else {
-        // Una vez superado el hero, nitidez y posición 100% nativas
+        // En móvil o superada la zona de transición: 100% nativo, máxima nitidez
         catalogSec.style.opacity   = '1';
         catalogSec.style.filter    = 'none';
         catalogSec.style.transform = 'none';
