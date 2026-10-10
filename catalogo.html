@@ -89,40 +89,39 @@
        HERO & IMMERSIVE SCROLL TRANSITION
     ========================================================= */
     .hero {
-      min-height: 94vh;
+      height: calc(100vh - 74px);
+      min-height: 520px;
+      max-height: 820px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       overflow: hidden;
       position: relative;
       background: var(--cream);
-      will-change: transform, opacity, filter;
-      transition: filter .1s ease-out;
     }
     .hero-text {
       display: flex; flex-direction: column; justify-content: center;
-      padding: 4rem 3rem 4rem 5rem;
-      will-change: transform, opacity;
+      padding: clamp(1.8rem, 4vh, 3.8rem) clamp(2rem, 3.5vw, 4.5rem);
     }
-    .hero-label { font-size: .72rem; letter-spacing: .28em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.6rem; }
-    .hero-title { font-family: var(--font-serif); font-size: clamp(2.6rem, 4.5vw, 4.8rem); line-height: 1.08; font-weight: 700; margin-bottom: 1.5rem; }
+    .hero-label { font-size: .72rem; letter-spacing: .28em; text-transform: uppercase; color: var(--gold); margin-bottom: clamp(.7rem, 1.6vh, 1.3rem); }
+    .hero-title { font-family: var(--font-serif); font-size: clamp(2.2rem, 3.4vw, 3.8rem); line-height: 1.1; font-weight: 700; margin-bottom: clamp(.7rem, 1.6vh, 1.2rem); }
     .hero-title span { color: var(--gold); font-style: italic; }
-    .hero-subtitle { font-size: 1.05rem; color: var(--gray); line-height: 1.75; max-width: 410px; margin-bottom: 2.5rem; }
-    .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .btn-primary { background: var(--black); color: var(--white); padding: .88rem 2rem; border: 2px solid var(--black); border-radius: 3px; font-size: .85rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; text-decoration: none; transition: var(--t); }
+    .hero-subtitle { font-size: clamp(.92rem, 1vw, 1.05rem); color: var(--gray); line-height: 1.65; max-width: 440px; margin-bottom: clamp(1.2rem, 2.4vh, 2rem); }
+    .hero-cta { display: flex; gap: .85rem; flex-wrap: wrap; }
+    .btn-primary { background: var(--black); color: var(--white); padding: .8rem 1.8rem; border: 2px solid var(--black); border-radius: 3px; font-size: .82rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; text-decoration: none; transition: var(--t); }
     .btn-primary:hover { background: var(--gold); border-color: var(--gold); }
-    .btn-outline { background: transparent; color: var(--black); padding: .88rem 2rem; border: 2px solid var(--black); border-radius: 3px; font-size: .85rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; text-decoration: none; transition: var(--t); }
+    .btn-outline { background: transparent; color: var(--black); padding: .8rem 1.8rem; border: 2px solid var(--black); border-radius: 3px; font-size: .82rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; text-decoration: none; transition: var(--t); }
     .btn-outline:hover { background: var(--black); color: var(--white); }
-    .hero-image { position: relative; overflow: hidden; will-change: transform, opacity; }
-    .hero-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 9s ease; }
-    .hero-image:hover img { transform: scale(1.06); }
-    .hero-badge { position: absolute; bottom: 2rem; left: 2rem; background: rgba(245,238,230,.94); backdrop-filter: blur(8px); padding: 1rem 1.5rem; border-left: 3px solid var(--gold); }
+    .hero-image { position: relative; overflow: hidden; height: 100%; }
+    .hero-image img { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform 7s ease; }
+    .hero-image:hover img { transform: scale(1.05); }
+    .hero-badge { position: absolute; bottom: clamp(1.2rem, 2.8vh, 2rem); left: clamp(1.2rem, 2.5vw, 2rem); background: rgba(245,238,230,.94); backdrop-filter: blur(8px); padding: clamp(.7rem, 1.4vh, 1rem) clamp(1rem, 2vw, 1.4rem); border-left: 3px solid var(--gold); border-radius: 2px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
     .hero-badge p  { font-size: .7rem; letter-spacing: .15em; text-transform: uppercase; color: var(--gray); margin-bottom: .25rem; }
-    .hero-badge strong { font-family: var(--font-serif); font-size: 1.05rem; }
+    .hero-badge strong { font-family: var(--font-serif); font-size: clamp(.95rem, 1.1vw, 1.1rem); }
 
     /* Indicador sutil de desplazamiento integrado */
     .scroll-indicator {
       display: inline-flex; align-items: center; gap: 8px;
-      margin-top: 2.2rem;
+      margin-top: clamp(1rem, 2vh, 1.8rem);
       color: var(--terracotta);
       font-size: .72rem; letter-spacing: .2em; text-transform: uppercase;
       font-weight: 600; opacity: .8; pointer-events: none;
@@ -145,10 +144,49 @@
       border-top: 1px solid rgba(227,214,203,.7);
       transform-origin: center top;
     }
-    .section-header { text-align: center; padding: 5rem 2rem 3rem; }
-    .section-label  { font-size: .72rem; letter-spacing: .28em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; }
-    .section-title  { font-family: var(--font-serif); font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 600; }
+    .section-header {
+      text-align: center;
+      padding: clamp(2.2rem, 4vh, 3.2rem) 2rem clamp(1.8rem, 3.2vh, 2.6rem);
+    }
+    .catalog-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .72rem;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--gold);
+      background: rgba(140,74,47,.08);
+      border: 1px solid rgba(140,74,47,.2);
+      padding: .35rem 1.1rem;
+      border-radius: 99px;
+      margin-bottom: .85rem;
+    }
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2.2rem, 3.6vw, 3.2rem);
+      font-weight: 700;
+      color: var(--black);
+      line-height: 1.15;
+      margin-bottom: .5rem;
+    }
     .section-title em { color: var(--gold); font-style: italic; }
+    .section-label {
+      font-size: .78rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 1.2rem;
+    }
+    .catalog-divider {
+      width: 48px;
+      height: 2px;
+      background: var(--gold);
+      margin: 0 auto;
+      border-radius: 2px;
+      opacity: .65;
+    }
 
     .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 3px; padding: 0 2rem 5rem; max-width: 1400px; margin: 0 auto; }
 
@@ -385,7 +423,7 @@
        RESPONSIVE
     ========================================================= */
     @media (max-width: 900px) {
-      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero { grid-template-columns: 1fr; height: auto; min-height: auto; max-height: none; }
       .hero-text { padding: 3rem 2rem; }
       .hero-image { height: 55vw; min-height: 280px; }
       .modal { grid-template-columns: 1fr; width: 96vw; max-height: 95vh; overflow-y: auto; }
@@ -569,8 +607,10 @@
 ================================================================ -->
 <section id="catalogo">
   <div class="section-header">
-    <p class="section-label" id="catSubtitle">✦ Colección Completa</p>
-    <h2 class="section-title" id="catTitle">Nuestros <em>Bolsos</em></h2>
+    <div class="catalog-badge">✦ Catálogo</div>
+    <h2 class="section-title" id="catTitle">Catálogo · <em>Bolsos</em></h2>
+    <p class="section-label" id="catSubtitle">✦ Colección Selecta</p>
+    <div class="catalog-divider"></div>
   </div>
   <div class="catalog-grid" id="productGrid"></div>
 </section>
@@ -768,7 +808,9 @@ function applySettings() {
 
   // Catalog
   document.getElementById('catSubtitle').textContent = `✦ ${S.catalogSubtitle}`;
-  document.getElementById('catTitle').innerHTML = S.catalogTitle.replace(/(\S+)$/, '<em>$1</em>');
+  const rawTitle = S.catalogTitle || 'Bolsos & Carteras';
+  const fullTitle = rawTitle.toLowerCase().includes('catálogo') ? rawTitle : `Catálogo · ${rawTitle}`;
+  document.getElementById('catTitle').innerHTML = fullTitle.replace(/(\S+)$/, '<em>$1</em>');
 
   // Instagram
   document.getElementById('igTitle').textContent = S.igBannerTitle;
@@ -1389,41 +1431,57 @@ window.addEventListener('scroll', () => {
     const scrollY = window.scrollY;
     const vh = window.innerHeight;
 
-    // Rango de transición activa en el primer tramo (0 a 100vh)
-    const transitionZone = Math.max(vh * 0.85, 300);
-    const progress = Math.min(scrollY / transitionZone, 1);
-
-    /* 1. HERO: Se desvanece, se desenfoca y se aleja en profundidad al bajar */
-    if (heroTextEl) {
-      heroTextEl.style.transform = `translateY(${-scrollY * 0.32}px) scale(${1 - progress * 0.04})`;
-      heroTextEl.style.opacity   = Math.max(1 - progress * 1.3, 0);
-      heroTextEl.style.filter    = `blur(${progress * 5}px)`;
-    }
-
-    if (heroImageEl) {
-      heroImageEl.style.transform = `translateY(${scrollY * 0.12}px) scale(${1 - progress * 0.05})`;
-      heroImageEl.style.opacity   = Math.max(1 - progress * 1.15, 0);
-      heroImageEl.style.filter    = `blur(${progress * 6}px)`;
-    }
-
+    // Desvanecer sutilmente el indicador de flecha al comenzar a bajar
     if (scrollIndicatorEl) {
-      scrollIndicatorEl.style.opacity = Math.max(1 - scrollY / 100, 0);
+      scrollIndicatorEl.style.opacity = Math.max(1 - scrollY / 120, 0);
     }
 
-    /* 2. CATÁLOGO: Transición limpia de elevación sin degradar la nitidez de las fotos */
-    if (catalogSec) {
-      if (window.innerWidth >= 768 && progress < 1) {
-        // En desktop: elevación y opacidad suave; NUNCA aplicar blur ni scale a las fotos del catálogo
-        const catOpacity = 0.88 + (progress * 0.12);
-        const catY       = (1 - progress) * 18;
-        catalogSec.style.opacity   = catOpacity.toFixed(2);
-        catalogSec.style.filter    = 'none';
-        catalogSec.style.transform = `translateY(${catY.toFixed(1)}px)`;
-      } else {
-        // En móvil o superada la zona de transición: 100% nativo, máxima nitidez
-        catalogSec.style.opacity   = '1';
-        catalogSec.style.filter    = 'none';
-        catalogSec.style.transform = 'none';
+    // Efecto de desenfoque y difuminado leve:
+    // Mantiene la portada 100% nítida durante los primeros píxeles de scroll
+    // para que la insignia, el bolso y el precio se lean con total claridad.
+    // Al avanzar el scroll hacia el catálogo, se aplica un blur elegante y suave (máx ~2.5px).
+    const startScroll = Math.min(220, vh * 0.28);
+    const endScroll   = vh * 0.95;
+
+    if (scrollY <= startScroll) {
+      // Zona inicial: máxima nitidez y visibilidad
+      if (heroTextEl) {
+        heroTextEl.style.opacity   = '1';
+        heroTextEl.style.filter    = 'none';
+        heroTextEl.style.transform = 'none';
+      }
+      if (heroImageEl) {
+        heroImageEl.style.opacity   = '1';
+        heroImageEl.style.filter    = 'none';
+        heroImageEl.style.transform = 'none';
+      }
+    } else if (scrollY < endScroll) {
+      // Zona de transición leve y elegante
+      const factor  = (scrollY - startScroll) / (endScroll - startScroll);
+      const blurPx  = (factor * 2.5).toFixed(1);                       // Desenfoque leve (máx 2.5px)
+      const opacity = Math.max(0.35, 1 - factor * 0.65).toFixed(2);    // Difuminado gradual sin apagarse
+      const textY   = (-factor * 35).toFixed(1);
+      const imgY    = (factor * 20).toFixed(1);
+
+      if (heroTextEl) {
+        heroTextEl.style.opacity   = opacity;
+        heroTextEl.style.filter    = `blur(${blurPx}px)`;
+        heroTextEl.style.transform = `translateY(${textY}px)`;
+      }
+      if (heroImageEl) {
+        heroImageEl.style.opacity   = opacity;
+        heroImageEl.style.filter    = `blur(${blurPx}px)`;
+        heroImageEl.style.transform = `translateY(${imgY}px)`;
+      }
+    } else {
+      // Fuera de vista de la portada
+      if (heroTextEl) {
+        heroTextEl.style.opacity   = '0.35';
+        heroTextEl.style.filter    = 'blur(2.5px)';
+      }
+      if (heroImageEl) {
+        heroImageEl.style.opacity   = '0.35';
+        heroImageEl.style.filter    = 'blur(2.5px)';
       }
     }
 
