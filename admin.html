@@ -1314,15 +1314,15 @@
         </div>
         <div class="form-group">
           <label class="form-label">Subtítulo</label>
-          <input type="text" class="form-control" id="ed-subtitle" placeholder="Ej: Bolso de mano de Cuero Genuino" />
+          <input type="text" class="form-control" id="ed-subtitle" placeholder="Ej: Tote de Cuero Genuino" />
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Categoría</label>
           <select class="form-control" id="ed-category">
-            <option value="Bolso de mano">Bolso de mano</option>
-            <option value="Cartera">Cartera</option>
+            <option value="Tote">Tote</option>
+            <option value="Clutch">Clutch</option>
             <option value="Crossbody">Crossbody</option>
             <option value="Mini Bag">Mini Bag</option>
             <option value="Shoulder">Shoulder</option>
@@ -1488,7 +1488,7 @@ const DEFAULT_DATA = {
     heroTitleHighlight: 'esencia',
     heroSubtitle: 'Diseños exclusivos y acabados refinados. Cada cartera ÁMBAR es una pieza creada para realzar tu estilo.',
     heroImage: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1400&q=85',
-    heroFeaturedName: 'Ámbar Signature Bolso de mano',
+    heroFeaturedName: 'Ámbar Signature Tote',
     heroFeaturedPrice: 180,
     statMaterial: '100%', statMaterialLabel: 'Confección Premium',
     statClients: '+500', statClientsLabel: 'Clientas Enamoradas',
@@ -1496,7 +1496,7 @@ const DEFAULT_DATA = {
     waNumber: '5491100000000',
     igUser: 'ambar.bolsos',
     igUrl: 'https://instagram.com/ambar.bolsos',
-    igBannerTitle: 'Descubre el universo ÁMBAR',
+    igBannerTitle: 'Descubrí el universo ÁMBAR',
     igBannerText: 'Inspiración, lanzamientos exclusivos y la comunidad que comparte nuestro amor por los bolsos y carteras.',
     catalogTitle: 'Bolsos & Carteras',
     catalogSubtitle: 'Colección Selecta',
@@ -1507,8 +1507,8 @@ const DEFAULT_DATA = {
     {
       id: 1,
       name: 'Ámbar Signature',
-      subtitle: 'Bolso de mano de Cuero Genuino',
-      category: 'Bolso de mano',
+      subtitle: 'Tote de Cuero Genuino',
+      category: 'Tote',
       badge: 'Más Vendido',
       price: 180,
       stock: null,
@@ -1527,8 +1527,8 @@ const DEFAULT_DATA = {
     {
       id: 2,
       name: 'Noir',
-      subtitle: 'Cartera de Noche',
-      category: 'Cartera',
+      subtitle: 'Clutch de Noche',
+      category: 'Clutch',
       badge: 'Premium',
       price: 145,
       stock: null,
@@ -1933,7 +1933,7 @@ function openEditor(id) {
   // Reset form
   document.getElementById('ed-name').value = '';
   document.getElementById('ed-subtitle').value = '';
-  document.getElementById('ed-category').value = 'Bolso de mano';
+  document.getElementById('ed-category').value = 'Tote';
   document.getElementById('ed-price').value = '';
   document.getElementById('ed-badge').value = '';
   document.getElementById('ed-badge-custom').value = '';
@@ -1957,7 +1957,7 @@ function openEditor(id) {
     if (p) {
       document.getElementById('ed-name').value = p.name || '';
       document.getElementById('ed-subtitle').value = p.subtitle || '';
-      document.getElementById('ed-category').value = p.category || 'Bolso de mano';
+      document.getElementById('ed-category').value = p.category || 'Tote';
       document.getElementById('ed-price').value = p.price != null ? p.price : '';
       document.getElementById('ed-desc').value = p.desc || '';
       document.getElementById('ed-material').value = (p.material || []).join('\n');
