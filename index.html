@@ -41,7 +41,7 @@
     ========================================================= */
     header {
       position: sticky; top: 0; z-index: 200;
-      background: rgba(245, 238, 230, 0.94);
+      background: rgba(221, 207, 190, 0.96); /* beige (antes era el fondo de la portada) */
       backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--gray-light);
       height: 74px;
@@ -96,7 +96,7 @@
       grid-template-columns: 1fr 1fr;
       overflow: hidden;
       position: relative;
-      background: var(--cream);
+      background: #f5eee6; /* claro (antes era el fondo del header) */
     }
     .hero-text {
       display: flex; flex-direction: column; justify-content: center;
@@ -139,7 +139,7 @@
     #catalogo {
       position: relative;
       z-index: 20;
-      background: var(--cream);
+      background: #f5eee6; /* mismo color que la portada */
       box-shadow: 0 -30px 70px rgba(33,22,18,.12);
       border-top: 1px solid rgba(227,214,203,.7);
       transform-origin: center top;
@@ -500,7 +500,7 @@
 
     /* ── Cursor glow (desktop only) ───────────────────────── */
     .cursor-glow {
-      position: fixed; pointer-events: none; z-index: 1; border-radius: 50%;
+      position: fixed; pointer-events: none; z-index: 150; border-radius: 50%; /* encima de portada y catálogo, debajo del header y modal */
       width: 500px; height: 500px;
       background: radial-gradient(circle, rgba(140, 73, 47, 0.137) 0%, transparent 68%);
       transform: translate(-50%, -50%);
@@ -802,11 +802,7 @@ function applySettings() {
 
 
 
-  // Catalog
-  document.getElementById('catSubtitle').textContent = `✦ ${S.catalogSubtitle}`;
-  const rawTitle = S.catalogTitle || 'Bolsos y Carteras';
-  const fullTitle = rawTitle.toLowerCase().includes('catálogo') ? rawTitle : `Catálogo · ${rawTitle}`;
-  document.getElementById('catTitle').innerHTML = fullTitle.replace(/(\S+)$/, '<em>$1</em>');
+  // Catalog: el encabezado es fijo ("✦ Catálogo") en el HTML
 
   // Instagram
   document.getElementById('igTitle').textContent = S.igBannerTitle;
@@ -831,6 +827,7 @@ function stockStatus(p) {
 }
 function stockLabel(p) {
   if (p.stock === 0)               return '✖ Sin stock';
+  if (p.stock === 1)               return '⚠ Última unidad';
   if (p.stock !== null && p.stock <= 5) return `⚠ Últimas ${p.stock} unidades`;
   return '✔ Disponible';
 }
@@ -906,7 +903,7 @@ function openModal(id) {
   stockEl.innerHTML = st === 'ok'
     ? `<span class="modal-stock-tag available">✔ Disponible</span>`
     : st === 'low'
-    ? `<span class="modal-stock-tag low">⚠ Últimas ${curProduct.stock} unidades disponibles</span>`
+    ? `<span class="modal-stock-tag low">⚠ ${curProduct.stock === 1 ? '¡Última unidad disponible!' : `Últimas ${curProduct.stock} unidades disponibles`}</span>`
     : `<div class="modal-stock-tag out">✖ Este modelo está sin stock — podés anotarte para que te avisemos</div>`;
 
   // Tabs
