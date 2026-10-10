@@ -274,46 +274,45 @@
     /* Photo gallery */
     .gallery-photos { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
     .modal-main-img-wrap { flex: 1; overflow: hidden; cursor: zoom-in; position: relative; min-height: 300px; touch-action: pan-y; }
-    .modal-main-img-wrap.zoomed { touch-action: none; cursor: grab; }
-    .modal-main-img-wrap.zoomed:active { cursor: grabbing; }
+    .modal-main-img-wrap.zoomed { touch-action: none; cursor: zoom-out; }
+    .modal-main-img-wrap.zoomed:active { cursor: zoom-out; }
     .modal-main-img-wrap img { width: 100%; height: 100%; object-fit: cover; transform: translate3d(0, 0, 0); -webkit-backface-visibility: hidden; backface-visibility: hidden; image-rendering: -webkit-optimize-contrast; image-rendering: auto; transition: transform .1s ease, opacity .2s ease; will-change: transform; user-select: none; -webkit-user-drag: none; }
-    .zoom-hint { position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,.5); color: #fff; padding: .32rem .75rem; border-radius: 50px; font-size: .68rem; letter-spacing: .08em; pointer-events: none; transition: opacity .3s; z-index: 9; }
-    .modal-main-img-wrap.zoomed .zoom-hint { opacity: 0; }
+    .zoom-hint { position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); color: #fff; padding: .32rem .75rem; border-radius: 50px; font-size: .68rem; letter-spacing: .08em; pointer-events: none; transition: opacity .3s; z-index: 20; }
     @media (hover: none) { .zoom-hint { display: none; } }
 
     /* Gallery nav arrows & mobile controls */
     .gallery-nav-btn {
       position: absolute; top: 50%; transform: translateY(-50%);
-      width: 38px; height: 38px; border-radius: 50%;
-      background: rgba(255,255,255,0.88); backdrop-filter: blur(6px);
-      border: 1px solid rgba(0,0,0,0.08); color: var(--black);
-      font-size: 1.4rem; line-height: 1; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; z-index: 8; transition: var(--t);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,0.92); backdrop-filter: blur(6px);
+      border: 1px solid rgba(0,0,0,0.1); color: var(--black);
+      font-size: 1.45rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 25; transition: var(--t);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
       user-select: none;
+      pointer-events: auto !important;
     }
-    .gallery-nav-btn:hover { background: var(--white); color: var(--gold); }
+    .gallery-nav-btn:hover { background: var(--white); color: var(--gold); transform: translateY(-50%) scale(1.08); }
     .gallery-nav-btn.prev { left: .75rem; }
     .gallery-nav-btn.next { right: .75rem; }
-    .modal-main-img-wrap.zoomed .gallery-nav-btn { opacity: 0; pointer-events: none; }
 
     .gallery-counter {
       position: absolute; bottom: .75rem; left: .75rem;
-      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
       color: #fff; font-size: .7rem; font-weight: 600; letter-spacing: .06em;
-      padding: .25rem .65rem; border-radius: 50px; z-index: 8; pointer-events: none;
+      padding: .25rem .65rem; border-radius: 50px; z-index: 20; pointer-events: none;
       transition: opacity .3s ease;
     }
-    .modal-main-img-wrap.zoomed .gallery-counter { opacity: 0; }
 
     .mobile-zoom-btn {
       position: absolute; bottom: .75rem; right: .75rem;
-      width: 36px; height: 36px; border-radius: 50%;
-      background: rgba(255,255,255,0.9); backdrop-filter: blur(6px);
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(255,255,255,0.92); backdrop-filter: blur(6px);
       border: 1px solid rgba(0,0,0,0.1); color: var(--black);
-      font-size: .9rem; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; z-index: 9; transition: var(--t);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      font-size: .95rem; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 25; transition: var(--t);
+      box-shadow: 0 3px 12px rgba(0,0,0,0.14);
+      pointer-events: auto !important;
     }
     .mobile-zoom-btn:hover, .mobile-zoom-btn.active { background: var(--gold); color: #fff; }
 
@@ -564,7 +563,7 @@
     <img src="assets/logo.jpg" alt="Logo ÁMBAR" class="brand-logo-img" id="headerLogoImg" />
     <div class="brand-text-wrap">
       <div class="logo" id="headerLogo">ÁMBAR</div>
-      <div class="logo-subtitle">Bolsos & Carteras</div>
+      <div class="logo-subtitle">Bolsos y Carteras</div>
     </div>
   </a>
   <span class="header-tag" id="headerTagline">Colección 2024</span>
@@ -587,7 +586,7 @@
       <a href="#" class="btn-outline" id="heroCta2" target="_blank" rel="noopener">Consultar por WhatsApp</a>
     </div>
     <div class="scroll-indicator" id="scrollIndicator">
-      <span>Descubrí la colección</span>
+      <span>Descubre la colección</span>
       <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
     </div>
   </div>
@@ -595,7 +594,7 @@
     <img id="heroImg" src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&q=88" alt="Bolso estrella" fetchpriority="high" decoding="async">
     <div class="hero-badge">
       <p>Pieza estrella</p>
-      <strong id="heroBadgeText">Mara Classic · $180 USD</strong>
+      <strong id="heroBadgeText">Mara Classic · $180 COP</strong>
     </div>
   </div>
 </section>
@@ -634,7 +633,7 @@
     <span class="f-logo" id="footerLogo" style="margin-bottom:0; letter-spacing:.28em;">ÁMBAR</span>
     <span style="font-size:.66rem; letter-spacing:.2em; text-transform:uppercase; color:var(--terracotta-light); font-weight:600;">Bolsos & Carteras</span>
   </div>
-  <span id="footerText">ÁMBAR · Bolsos & Carteras · © 2024 · Todos los derechos reservados</span>
+  <span id="footerText">ÁMBAR · Bolsos y Carteras · © 2024 · Todos los derechos reservados</span>
 </footer>
 
 <!-- MODAL BACKDROP -->
@@ -658,11 +657,11 @@
     <div class="gallery-photos" id="galleryPhotos">
       <div class="modal-main-img-wrap" id="mainImgWrap">
         <img id="mainImg" src="" alt="" draggable="false">
-        <span class="zoom-hint">🔍 Hover para zoom</span>
-        <button class="gallery-nav-btn prev" id="galleryPrev" aria-label="Foto anterior" onclick="navGallery(-1)">‹</button>
-        <button class="gallery-nav-btn next" id="galleryNext" aria-label="Foto siguiente" onclick="navGallery(1)">›</button>
+        <span class="zoom-hint" id="zoomHint">🔍 Clic para ampliar</span>
+        <button class="gallery-nav-btn prev" id="galleryPrev" aria-label="Foto anterior" onclick="navGallery(-1, event)">‹</button>
+        <button class="gallery-nav-btn next" id="galleryNext" aria-label="Foto siguiente" onclick="navGallery(1, event)">›</button>
         <div class="gallery-counter" id="galleryCounter">1 / 1</div>
-        <button class="mobile-zoom-btn" id="mobileZoomBtn" aria-label="Ampliar imagen" onclick="toggleMobileZoomBtn()">🔍</button>
+        <button class="mobile-zoom-btn" id="mobileZoomBtn" aria-label="Ampliar imagen" onclick="toggleMobileZoomBtn(event)">🔍</button>
       </div>
       <div class="modal-thumbs" id="thumbsRow"></div>
     </div>
@@ -747,10 +746,9 @@ const DEFAULT_SETTINGS = {
   statModels:'6', statModelsLabel:'Diseños Exclusivos',
   waNumber:'5491100000000', igUser:'ambar.bolsos',
   igUrl:'https://instagram.com/ambar.bolsos',
-  igBannerTitle:'Descubrí el universo ÁMBAR',
+  igBannerTitle:'Descubre el universo ÁMBAR',
   igBannerText:'Inspiración, lanzamientos exclusivos y la comunidad que comparte nuestro amor por los bolsos y carteras.',
-  catalogTitle:'Bolsos & Carteras', catalogSubtitle:'Colección Selecta',
-  footerText:'ÁMBAR · Bolsos & Carteras · © 2026 · Todos los derechos reservados'
+
 };
 const DEFAULT_PRODUCTS = [];
 
@@ -786,7 +784,7 @@ function applySettings() {
   const wa = `https://wa.me/${S.waNumber}?text=${encodeURIComponent('Hola! Quiero consultar sobre los bolsos ÁMBAR ✨')}`;
 
   // Header
-  document.title = `${S.brandName} — Bolsos & Carteras`;
+  document.title = `${S.brandName} — Bolsos y Carteras`;
   const logoEl = document.getElementById('headerLogo');
   if (logoEl) logoEl.textContent = S.brandName;
   const logoImg = document.getElementById('headerLogoImg');
@@ -801,14 +799,14 @@ function applySettings() {
   document.getElementById('heroSubtitle').textContent = S.heroSubtitle;
   document.getElementById('heroImg').src = S.heroImage;
   document.getElementById('heroImg').alt = S.heroFeaturedName;
-  document.getElementById('heroBadgeText').textContent = `${S.heroFeaturedName} · $${S.heroFeaturedPrice} USD`;
+  document.getElementById('heroBadgeText').textContent = `${S.heroFeaturedName} · $${S.heroFeaturedPrice} COP`;
   document.getElementById('heroCta2').href = wa;
 
 
 
   // Catalog
   document.getElementById('catSubtitle').textContent = `✦ ${S.catalogSubtitle}`;
-  const rawTitle = S.catalogTitle || 'Bolsos & Carteras';
+  const rawTitle = S.catalogTitle || 'Bolsos y Carteras';
   const fullTitle = rawTitle.toLowerCase().includes('catálogo') ? rawTitle : `Catálogo · ${rawTitle}`;
   document.getElementById('catTitle').innerHTML = fullTitle.replace(/(\S+)$/, '<em>$1</em>');
 
@@ -876,7 +874,7 @@ function renderCards() {
         <h3 class="product-name">${p.name}</h3>
         <p class="product-desc-short">${(p.desc||'').substring(0, 78)}…</p>
         <div class="product-footer">
-          <div class="product-price">${p.stock===0?'<span style="color:#c0392b;font-size:.9rem;font-family:var(--font-sans)">Sin stock</span>':`$${p.price} <span>USD</span>`}</div>
+          <div class="product-price">${p.stock===0?'<span style="color:#c0392b;font-size:.9rem;font-family:var(--font-sans)">Sin stock</span>':`$${p.price} <span>COP</span>`}</div>
           <div class="angle-dots">
             ${(p.images||[]).map((_,j)=>`<div class="angle-dot${j===0?' on':''}"></div>`).join('')}
             ${has360?'<div style="width:6px;height:6px;border-radius:50%;background:var(--gold);margin-left:4px;opacity:.5" title="360°"></div>':''}
@@ -902,7 +900,7 @@ function openModal(id) {
   document.getElementById('mCat').textContent   = curProduct.category;
   document.getElementById('mTitle').textContent = curProduct.name;
   document.getElementById('mSub').textContent   = curProduct.subtitle;
-  document.getElementById('mPrice').innerHTML   = `<sup>$</sup>${curProduct.price} <small style="font-size:.85rem;color:var(--gray);font-weight:400;font-family:var(--font-sans)">USD</small>`;
+  document.getElementById('mPrice').innerHTML   = `<sup>$</sup>${curProduct.price} <small style="font-size:.85rem;color:var(--gray);font-weight:400;font-family:var(--font-sans)">COP</small>`;
 
   // Stock tag
   const st = stockStatus(curProduct);
@@ -936,7 +934,7 @@ function openModal(id) {
   const msg360 = has360 ? ' (con vista 360°)' : '';
   const msg = isOut
     ? encodeURIComponent(`Hola! Vi el bolso *${curProduct.name}* y quisiera anotarme para cuando llegue stock 🙏`)
-    : encodeURIComponent(`Hola! Vi el catálogo${msg360} y me interesa el bolso *${curProduct.name}* ($${curProduct.price} USD). ¿Está disponible? 😊`);
+    : encodeURIComponent(`Hola! Vi el catálogo${msg360} y me interesa el bolso *${curProduct.name}* ($${curProduct.price} COP). ¿Está disponible? 😊`);
   const waLink = `https://wa.me/${S.waNumber}?text=${msg}`;
   const waBtn = document.getElementById('waBtn');
   waBtn.href = waLink;
@@ -975,7 +973,9 @@ function switchGalleryTab(tab) {
 }
 
 /* ─── IMAGE SWITCHER & GALLERY NAVIGATION ───────────────────────── */
-function navGallery(direction) {
+function navGallery(direction, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  clearZoom();
   if (!curProduct || !curProduct.images || curProduct.images.length <= 1) return;
   const nextIdx = (curIdx + direction + curProduct.images.length) % curProduct.images.length;
   setImage(nextIdx);
@@ -1037,6 +1037,8 @@ function clearZoom() {
   mainWrap.classList.remove('zoomed');
   const zBtn = document.getElementById('mobileZoomBtn');
   if (zBtn) { zBtn.innerHTML = '🔍'; zBtn.classList.remove('active'); }
+  const hint = document.getElementById('zoomHint');
+  if (hint) { hint.textContent = '🔍 Clic para ampliar'; }
 }
 
 function zoomAt(xPercent, yPercent, scale = 2.4) {
@@ -1050,9 +1052,12 @@ function zoomAt(xPercent, yPercent, scale = 2.4) {
   mainWrap.classList.add('zoomed');
   const zBtn = document.getElementById('mobileZoomBtn');
   if (zBtn) { zBtn.innerHTML = '✕'; zBtn.classList.add('active'); }
+  const hint = document.getElementById('zoomHint');
+  if (hint) { hint.textContent = '🔍 Clic para alejar'; }
 }
 
-function toggleMobileZoomBtn() {
+function toggleMobileZoomBtn(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
   if (isZoomed) {
     clearZoom();
   } else {
@@ -1060,20 +1065,37 @@ function toggleMobileZoomBtn() {
   }
 }
 
-// 1. DESKTOP: Mouse movement tracks coordinates
+// 1. DESKTOP: Click para activar/desactivar zoom. Nunca se activa solo por mover el ratón
+mainWrap.addEventListener('click', e => {
+  // Ignorar clicks en flechas prev/next, contador o botón flotante
+  if (e.target.closest('.gallery-nav-btn') || e.target.closest('.mobile-zoom-btn') || e.target.closest('.gallery-counter')) {
+    return;
+  }
+  if (window.matchMedia('(hover: hover)').matches) {
+    const r = mainWrap.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 100;
+    const y = ((e.clientY - r.top) / r.height) * 100;
+    if (isZoomed) {
+      clearZoom();
+    } else {
+      zoomAt(x, y, 2.3);
+    }
+  }
+});
+
+// Movimiento del cursor: ÚNICAMENTE recorre la foto si el usuario ya activó el zoom
 mainWrap.addEventListener('mousemove', e => {
-  if (!window.matchMedia('(hover: hover)').matches) return;
+  if (!isZoomed) return;
+  if (e.target.closest('.gallery-nav-btn') || e.target.closest('.mobile-zoom-btn')) return;
   const r = mainWrap.getBoundingClientRect();
-  const x = ((e.clientX - r.left) / r.width) * 100;
-  const y = ((e.clientY - r.top) / r.height) * 100;
+  const x = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100));
+  const y = Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100));
   mainImg.style.transformOrigin = `${x}% ${y}%`;
-  mainImg.style.transform = 'scale(2.3)';
-  mainImg.style.transition = 'transform .08s ease';
-  mainWrap.classList.add('zoomed');
+  mainImg.style.transition = 'transform .06s ease';
 });
 
 mainWrap.addEventListener('mouseleave', () => {
-  if (window.matchMedia('(hover: hover)').matches) {
+  if (isZoomed) {
     clearZoom();
   }
 });
