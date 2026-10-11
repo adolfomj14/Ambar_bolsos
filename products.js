@@ -1,7 +1,7 @@
 /**
  * ÁMBAR — Bolsos & Carteras
  * Generado por el Panel de Administración ÁMBAR
- * Fecha: 10/10/2026, 12:10:56
+ * Fecha: 10/10/2026, 10:32:37
  *
  * Para actualizar el catálogo:
  * 1. Descargá este archivo
@@ -74,10 +74,7 @@ window.CATALOG_DATA = {
       visible: true,
       desc: "Estilo y practicidad en uno. Confeccionado en material sintético de alta calidad. Destaca por su diseño a cuadros, detalles dorados y una original asa fruncida. ¡El accesorio perfecto para complementar tu día a día!",
       material: [
-        "Cuero de grano fino importado",
-        "Forro de satén negro",
-        "Cadena dorada removible de 110 cm",
-        "Cierre magnético oculto reforzado"
+        "Cuero sintético"
       ],
       dims: [
         "Alto: 14 cm",
@@ -89,10 +86,7 @@ window.CATALOG_DATA = {
         "assets/bolsos/BOLSO NE3.jpg",
         "assets/bolsos/BOLSO NE4.jpg",
         "assets/bolsos/BOLSO NE5.jpg",
-        "assets/bolsos/BOLSO NE6.jpg",
-        "assets/bolsos/BOLSO NE7.jpg",
-        "assets/bolsos/BOLSO NE8.jpg",
-        "assets/bolsos/BOLSO NE9.jpg"
+        "assets/bolsos/BOLSO NE6.jpg"
       ],
       images360: [
 
