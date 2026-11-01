@@ -1,7 +1,7 @@
 /**
  * ÁMBAR — Bolsos & Carteras
  * Generado por el Panel de Administración ÁMBAR
- * Fecha: 31/10/2026, 11:45:18
+ * Fecha: 31/10/2026, 11:47:57
  *
  * Para actualizar el catálogo:
  * 1. Descargá este archivo
@@ -102,7 +102,7 @@ window.CATALOG_DATA = {
       id: 3,
       name: "Viena",
       subtitle: "Una cartera cómoda y espaciosa para llevar al hombro",
-      category: "Crossbody",
+      category: "Cartera",
       badge: null,
       price: 45000,
       stock: 1,
