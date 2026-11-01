@@ -1323,7 +1323,7 @@
           <select class="form-control" id="ed-category">
             <option value="Bolso de mano">Bolso de mano</option>
             <option value="Clutch">Clutch</option>
-            <option value="Crossbody">Crossbody</option>
+            <option value="Crossbody">Cartera</option>
             <option value="Mini Bag">Mini Bag</option>
             <option value="Shoulder">Shoulder</option>
             <option value="Structured">Structured</option>
@@ -2390,6 +2390,309 @@ function escHtml(str) {
 /* ===================================================
    BOOT
 =================================================== */
+/* ===================================================
+   PUBLICACIÓN AUTOMÁTICA EN LA WEB (GitHub → Vercel)
+   - Cada cambio guardado en el admin se sube a GitHub (products.js)
+     y Vercel actualiza la página sola en ~1 minuto.
+   - Las fotos se comprimen en el navegador y se suben a assets/bolsos/.
+   - El token se guarda SOLO en este navegador (nunca en el código).
+=================================================== */
+const GH_CONFIG_KEY = 'AMBAR_GH_CONFIG_V1';
+let ghAutoReady = false;
+let ghPublishTimer = null;
+let ghPublishing = false;
+let ghPendingAgain = false;
+
+function ghGetConfig() {
+  try { return JSON.parse(localStorage.getItem(GH_CONFIG_KEY)) || null; } catch(e) { return null; }
+}
+function ghIsConfigured() {
+  const c = ghGetConfig();
+  return !!(c && c.owner && c.repo && c.token);
+}
+function ghB64FromText(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function ghTextFromB64(b64) {
+  const bin = atob((b64 || '').replace(/\n/g, ''));
+  const bytes = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+function ghApiUrl(path) {
+  const c = ghGetConfig();
+  const enc = path.split('/').map(encodeURIComponent).join('/');
+  return `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}/contents/${enc}`;
+}
+function ghHeaders() {
+  return {
+    'Authorization': `Bearer ${ghGetConfig().token}`,
+    'Accept': 'application/vnd.github+json',
+    'Content-Type': 'application/json'
+  };
+}
+async function ghGetFile(path) {
+  const c = ghGetConfig();
+  const res = await fetch(`${ghApiUrl(path)}?ref=${encodeURIComponent(c.branch || 'main')}&t=${Date.now()}`, { headers: ghHeaders(), cache: 'no-store' });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(ghErrorText(res.status));
+  return res.json();
+}
+async function ghPutFile(path, base64Content, message, sha) {
+  const c = ghGetConfig();
+  const body = { message, content: base64Content, branch: c.branch || 'main' };
+  if (sha) body.sha = sha;
+  const res = await fetch(ghApiUrl(path), { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
+  if (!res.ok) throw new Error(ghErrorText(res.status));
+  return res.json();
+}
+function ghErrorText(status) {
+  if (status === 401) return 'Token inválido o vencido. Revisá la conexión con GitHub.';
+  if (status === 403) return 'El token no tiene permiso de escritura en el repositorio.';
+  if (status === 404) return 'No se encontró el repositorio. Revisá usuario / nombre del repositorio.';
+  if (status === 409) return 'Conflicto al guardar, se reintentará.';
+  if (status === 422) return 'GitHub rechazó el archivo (¿demasiado grande?).';
+  return `Error de GitHub (${status}).`;
+}
+
+/* ---------- Estado visible en la barra superior ---------- */
+function ghSetStatus(state, text) {
+  let el = document.getElementById('gh-status');
+  const bar = document.getElementById('topbar-actions');
+  if (!el && bar) {
+    el = document.createElement('span');
+    el.id = 'gh-status';
+    el.style.cssText = 'font-size:.75rem;font-weight:600;padding:.35rem .7rem;border-radius:50px;white-space:nowrap;cursor:pointer;';
+    el.title = 'Conexión con la web (GitHub)';
+    el.onclick = ghOpenConfig;
+  }
+  if (!el) return;
+  if (bar && el.parentElement !== bar) bar.prepend(el);
+  const styles = {
+    off:     ['#fdf2e9', '#9a5b2e', '⚙ Conectar web'],
+    idle:    ['#e8f7ee', '#1a7a3a', '● Web al día'],
+    pending: ['#fef3e2', '#865400', '● Cambios sin publicar'],
+    busy:    ['#e8f0fe', '#1a4fa0', '⟳ Publicando…'],
+    error:   ['#fdecea', '#c0392b', '✕ Error al publicar']
+  };
+  const s = styles[state] || styles.off;
+  el.style.background = s[0];
+  el.style.color = s[1];
+  el.textContent = text || s[2];
+}
+
+/* ---------- Publicar products.js ---------- */
+async function ghPublishNow(manual) {
+  if (!ghIsConfigured()) {
+    if (manual) ghOpenConfig();
+    ghSetStatus('off');
+    return;
+  }
+  if (ghPublishing) { ghPendingAgain = true; return; }
+  ghPublishing = true;
+  ghSetStatus('busy');
+  try {
+    const content = generateProductsJS();
+    const remote = await ghGetFile('products.js');
+    if (remote && ghTextFromB64(remote.content) === content) {
+      ghSetStatus('idle');
+      if (manual) showToast('La web ya está actualizada.', 'success');
+    } else {
+      try {
+        await ghPutFile('products.js', ghB64FromText(content), 'Actualizar catálogo desde el admin', remote && remote.sha);
+      } catch (err) {
+        // Reintento único ante conflicto (sha desactualizado)
+        const again = await ghGetFile('products.js');
+        await ghPutFile('products.js', ghB64FromText(content), 'Actualizar catálogo desde el admin', again && again.sha);
+      }
+      ghSetStatus('idle', '● Publicado ✓');
+      showToast('✓ Publicado. La página se actualiza en ~1 minuto.', 'success');
+    }
+  } catch (err) {
+    console.error(err);
+    ghSetStatus('error');
+    showToast(err.message || 'No se pudo publicar.', 'error');
+  } finally {
+    ghPublishing = false;
+    if (ghPendingAgain) { ghPendingAgain = false; ghSchedulePublish(); }
+  }
+}
+function ghSchedulePublish() {
+  if (!ghAutoReady) return;
+  if (!ghIsConfigured()) { ghSetStatus('off'); return; }
+  ghSetStatus('pending');
+  clearTimeout(ghPublishTimer);
+  ghPublishTimer = setTimeout(() => ghPublishNow(false), 1500);
+}
+
+// Cada vez que el admin guarda algo, se programa la publicación automática
+const _persistDataOriginal = persistData;
+persistData = function() {
+  _persistDataOriginal();
+  ghSchedulePublish();
+};
+
+/* ---------- Subir fotos (comprimidas) ---------- */
+function ghSafeName(name) {
+  const base = name.replace(/\.[^.]+$/, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'foto';
+  return `${base}-${Date.now().toString(36)}.jpg`;
+}
+function ghCompressImage(file, maxDim = 1600, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      const scale = Math.min(1, maxDim / Math.max(width, height));
+      width = Math.round(width * scale); height = Math.round(height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Formato de imagen no soportado. Usá JPG o PNG.')); };
+    img.src = url;
+  });
+}
+function ghPickPhoto(i) {
+  if (!ghIsConfigured()) {
+    showToast('Primero conectá la web con GitHub para poder subir fotos.', 'info');
+    ghOpenConfig();
+    return;
+  }
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const box = document.getElementById(`slot-preview-${i}`);
+    try {
+      if (box) box.innerHTML = `<span class="slot-num">${i + 1}</span><div class="img-placeholder"><div class="ph">⟳</div><div>Subiendo…</div></div>`;
+      const dataUrl = await ghCompressImage(file);
+      const path = `assets/bolsos/${ghSafeName(file.name)}`;
+      await ghPutFile(path, dataUrl.split(',')[1], `Subir foto ${path}`);
+      document.getElementById(`slot-url-${i}`).value = path;
+      // Vista previa con la imagen local (en la web aparece al terminar de publicar)
+      if (box) box.innerHTML = `<span class="slot-num">${i + 1}</span><img src="${dataUrl}" alt="" />`;
+      showToast('✓ Foto subida. Recordá guardar el producto.', 'success');
+    } catch (err) {
+      console.error(err);
+      if (box) updateSlotPreview(i);
+      showToast(err.message || 'No se pudo subir la foto.', 'error');
+    }
+  };
+  input.click();
+}
+// Agrega el botón 📷 a cada casilla de foto (sin modificar las casillas existentes)
+const _buildImageSlotsOriginal = buildImageSlots;
+buildImageSlots = function() {
+  _buildImageSlotsOriginal.apply(this, arguments);
+  document.querySelectorAll('#image-slots .image-slot').forEach(slot => {
+    const i = parseInt(slot.id.replace('slot-', ''), 10);
+    const row = slot.querySelector('.slot-input-row');
+    if (!row || row.querySelector('.gh-upload-btn')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'slot-clear-btn gh-upload-btn';
+    btn.title = 'Subir foto desde el dispositivo';
+    btn.textContent = '📷';
+    btn.onclick = () => ghPickPhoto(i);
+    row.insertBefore(btn, row.firstChild);
+  });
+};
+
+/* ---------- Ventana de conexión con GitHub ---------- */
+function ghOpenConfig() {
+  const c = ghGetConfig() || {};
+  let ov = document.getElementById('gh-config-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'gh-config-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    ov.innerHTML = `
+      <div style="background:#fff;border-radius:12px;max-width:440px;width:100%;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);font-size:.9rem;">
+        <h3 style="margin:0 0 6px;font-size:1.1rem;">🌐 Conectar la web</h3>
+        <p style="margin:0 0 14px;color:#6e5a51;font-size:.8rem;line-height:1.5;">Se llena una sola vez en este dispositivo. Los cambios del admin se publicarán solos en la página.</p>
+        <label class="form-label">Usuario de GitHub</label>
+        <input class="form-control" id="gh-owner" placeholder="ej. ambarbolsos" style="margin-bottom:10px" />
+        <label class="form-label">Nombre del repositorio</label>
+        <input class="form-control" id="gh-repo" placeholder="ej. ambar-catalogo" style="margin-bottom:10px" />
+        <label class="form-label">Rama</label>
+        <input class="form-control" id="gh-branch" placeholder="main" style="margin-bottom:10px" />
+        <label class="form-label">Token de GitHub</label>
+        <input class="form-control" id="gh-token" type="password" placeholder="github_pat_..." style="margin-bottom:16px" />
+        <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+          <button class="btn btn-outline" id="gh-cancel">Cancelar</button>
+          <button class="btn btn-outline" id="gh-disconnect" style="color:#c0392b">Desconectar</button>
+          <button class="btn btn-primary" id="gh-save">Guardar y probar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
+    ov.querySelector('#gh-cancel').onclick = () => { ov.style.display = 'none'; };
+    ov.querySelector('#gh-disconnect').onclick = () => {
+      localStorage.removeItem(GH_CONFIG_KEY);
+      ov.style.display = 'none';
+      ghSetStatus('off');
+      showToast('Conexión eliminada de este dispositivo.', 'info');
+    };
+    ov.querySelector('#gh-save').onclick = async () => {
+      const cfg = {
+        owner: ov.querySelector('#gh-owner').value.trim(),
+        repo: ov.querySelector('#gh-repo').value.trim(),
+        branch: ov.querySelector('#gh-branch').value.trim() || 'main',
+        token: ov.querySelector('#gh-token').value.trim()
+      };
+      if (!cfg.owner || !cfg.repo || !cfg.token) { showToast('Completá usuario, repositorio y token.', 'error'); return; }
+      localStorage.setItem(GH_CONFIG_KEY, JSON.stringify(cfg));
+      try {
+        const res = await fetch(`https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`, { headers: ghHeaders() });
+        if (!res.ok) throw new Error(ghErrorText(res.status));
+        const info = await res.json();
+        if (info.permissions && info.permissions.push === false) throw new Error(ghErrorText(403));
+        ov.style.display = 'none';
+        showToast('✓ Conectado con GitHub.', 'success');
+        ghPublishNow(false);
+      } catch (err) {
+        ghSetStatus('error');
+        showToast(err.message || 'No se pudo conectar.', 'error');
+      }
+    };
+  }
+  ov.querySelector('#gh-owner').value = c.owner || '';
+  ov.querySelector('#gh-repo').value = c.repo || '';
+  ov.querySelector('#gh-branch').value = c.branch || 'main';
+  ov.querySelector('#gh-token').value = c.token || '';
+  ov.style.display = 'flex';
+}
+
+// Botón "🚀 Publicar" en la barra superior (los botones existentes se mantienen)
+const _renderTopbarActionsOriginal = renderTopbarActions;
+renderTopbarActions = function(view) {
+  _renderTopbarActionsOriginal(view);
+  const bar = document.getElementById('topbar-actions');
+  if (!bar) return;
+  const pub = document.createElement('button');
+  pub.className = 'btn btn-primary';
+  pub.title = 'Publicar los cambios en la página web';
+  pub.textContent = '🚀 Publicar';
+  pub.onclick = () => ghPublishNow(true);
+  bar.insertBefore(pub, bar.firstChild);
+  ghSetStatus(ghIsConfigured() ? 'idle' : 'off');
+};
+
+// La publicación automática se activa después de cargar (no al abrir el admin)
+document.addEventListener('DOMContentLoaded', () => setTimeout(() => { ghAutoReady = true; }, 0));
+
 document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
