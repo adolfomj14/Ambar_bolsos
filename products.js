@@ -102,7 +102,7 @@ window.CATALOG_DATA = {
       id: 3,
       name: "Viena",
       subtitle: "Una cartera cómoda y espaciosa para llevar al hombro",
-      category: "Crossbody",
+      category: "Cartera",
       badge: null,
       price: 45000,
       stock: 1,
