@@ -239,9 +239,13 @@
     .product-category { font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin-bottom: .3rem; }
     .product-name { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; margin-bottom: .45rem; }
     .product-desc-short { font-size: .82rem; color: var(--gray); line-height: 1.55; margin-bottom: .95rem; }
-    .product-footer { display: flex; align-items: center; justify-content: space-between; }
-    .product-price { font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; }
+    .product-footer { display: flex; align-items: flex-end; justify-content: space-between; gap: .5rem; }
+    .product-price { font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; display: flex; flex-direction: column; gap: 2px; line-height: 1.15; }
     .product-price span { font-family: var(--font-sans); font-size: .75rem; color: var(--gray); font-weight: 400; }
+    .price-promo-top { display: flex; align-items: center; gap: .42rem; flex-wrap: wrap; }
+    .product-price .price-old { font-family: var(--font-sans); font-size: .8rem; color: var(--gray); text-decoration: line-through; font-weight: 400; opacity: .85; }
+    .product-price .price-discount-badge { font-family: var(--font-sans); font-size: .66rem; font-weight: 700; color: #fff; background: #c0392b; padding: .14rem .46rem; border-radius: 50px; letter-spacing: .04em; line-height: 1.2; }
+    .product-price .price-final { color: var(--terracotta-dark); font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; }
     .stock-indicator { font-size: .72rem; font-weight: 600; padding: .22rem .6rem; border-radius: 50px; }
     .stock-ok  { color: #1a7a3a; background: #e8f7ee; }
     .stock-low { color: #865400; background: #fef3e2; }
@@ -353,6 +357,10 @@
     .modal-subtitle { font-size: .88rem; color: var(--gray); margin-bottom: 1.3rem; }
     .modal-price { font-family: var(--font-serif); font-size: 2rem; font-weight: 700; margin-bottom: .6rem; }
     .modal-price sup { font-size: .9rem; font-family: var(--font-sans); vertical-align: super; }
+    .modal-promo-row { display: flex; align-items: center; gap: .55rem; margin-bottom: .2rem; font-family: var(--font-sans); }
+    .modal-price-old { font-size: .98rem; color: var(--gray); text-decoration: line-through; font-weight: 400; }
+    .modal-discount-pill { font-size: .74rem; font-weight: 700; color: #fff; background: #c0392b; padding: .2rem .6rem; border-radius: 50px; letter-spacing: .05em; }
+    .modal-price-final { color: var(--terracotta-dark); }
     .modal-stock-tag { display: inline-block; font-size: .75rem; font-weight: 600; padding: .3rem .75rem; border-radius: 50px; margin-bottom: 1.2rem; }
     .modal-stock-tag.available  { color: #1a7a3a; background: #e8f7ee; }
     .modal-stock-tag.low   { color: #865400; background: #fef3e2; }
@@ -821,6 +829,17 @@ function preloadProduct(id) {
   });
 }
 
+/* ─── PROMO / DISCOUNT HELPER ───────────────────────────────────── */
+function getPromo(p) {
+  const orig = Number(p.price) || 0;
+  const pct = Number(p.discount) || 0;
+  if (orig <= 0 || pct <= 0 || pct >= 100) return null;
+  const finalPrice = (p.promoPrice != null && Number(p.promoPrice) > 0 && Number(p.promoPrice) < orig)
+    ? Math.round(Number(p.promoPrice))
+    : Math.round(orig * (1 - pct / 100));
+  return { orig, pct: Math.round(pct), finalPrice };
+}
+
 /* ─── RENDER CARDS ──────────────────────────────────────────────── */
 function renderCards() {
   const grid = document.getElementById('productGrid');
@@ -828,11 +847,17 @@ function renderCards() {
     const st = stockStatus(p);
     const has360 = p.images360 && p.images360.length >= 3;
     const isPriority = i < 2;
+    const promo = getPromo(p);
+    const priceHtml = p.stock === 0
+      ? '<span style="color:#c0392b;font-size:.9rem;font-family:var(--font-sans)">Sin stock</span>'
+      : promo
+        ? `<div class="price-promo-top"><span class="price-old">$${promo.orig}</span><span class="price-discount-badge">-${promo.pct}%</span></div><div class="price-final">$${promo.finalPrice} <span>COP</span></div>`
+        : `<div>$${p.price} <span>COP</span></div>`;
     return `
     <div class="product-card reveal" style="transition-delay:${i * .08}s" onclick="openModal(${p.id})" onmouseenter="preloadProduct(${p.id})" ontouchstart="preloadProduct(${p.id})">
       <div class="product-image-wrap">
         <img src="${p.images && p.images[0] || ''}" alt="${p.name}" ${isPriority ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
-        ${p.badge ? `<span class="product-badge${st==='low'?' stock-low':st==='out'?' stock-out':''}">${p.badge}</span>` : (st !== 'ok' ? `<span class="product-badge ${st==='low'?'stock-low':'stock-out'}">${stockLabel(p)}</span>` : '')}
+        ${p.badge ? `<span class="product-badge${st==='low'?' stock-low':st==='out'?' stock-out':''}">${p.badge}</span>` : (st !== 'ok' ? `<span class="product-badge ${st==='low'?'stock-low':'stock-out'}">${stockLabel(p)}</span>` : (promo ? `<span class="product-badge" style="background:#c0392b">-${promo.pct}% OFF</span>` : ''))}
         ${has360 ? '<span class="badge-360">360°</span>' : ''}
         <div class="product-overlay"></div>
         <button class="product-quick-view" aria-label="Ver detalle de ${p.name}">Ver Detalle →</button>
@@ -842,7 +867,7 @@ function renderCards() {
         <h3 class="product-name">${p.name}</h3>
         <p class="product-desc-short">${(p.desc||'').substring(0, 78)}…</p>
         <div class="product-footer">
-          <div class="product-price">${p.stock===0?'<span style="color:#c0392b;font-size:.9rem;font-family:var(--font-sans)">Sin stock</span>':`$${p.price} <span>COP</span>`}</div>
+          <div class="product-price">${priceHtml}</div>
           <div class="angle-dots">
             ${(p.images||[]).map((_,j)=>`<div class="angle-dot${j===0?' on':''}"></div>`).join('')}
             ${has360?'<div style="width:6px;height:6px;border-radius:50%;background:var(--gold);margin-left:4px;opacity:.5" title="360°"></div>':''}
@@ -865,10 +890,13 @@ function openModal(id) {
   curIdx = 0;
 
   // Fill info
+  const promo = getPromo(curProduct);
   document.getElementById('mCat').textContent   = curProduct.category;
   document.getElementById('mTitle').textContent = curProduct.name;
   document.getElementById('mSub').textContent   = curProduct.subtitle;
-  document.getElementById('mPrice').innerHTML   = `<sup>$</sup>${curProduct.price} <small style="font-size:.85rem;color:var(--gray);font-weight:400;font-family:var(--font-sans)">COP</small>`;
+  document.getElementById('mPrice').innerHTML   = promo
+    ? `<div class="modal-promo-row"><span class="modal-price-old">$${promo.orig} COP</span><span class="modal-discount-pill">-${promo.pct}% OFF</span></div><div class="modal-price-final"><sup>$</sup>${promo.finalPrice} <small style="font-size:.85rem;color:var(--gray);font-weight:400;font-family:var(--font-sans)">COP</small></div>`
+    : `<sup>$</sup>${curProduct.price} <small style="font-size:.85rem;color:var(--gray);font-weight:400;font-family:var(--font-sans)">COP</small>`;
 
   // Stock tag
   const st = stockStatus(curProduct);
@@ -900,9 +928,12 @@ function openModal(id) {
   // WhatsApp
   const isOut = curProduct.stock === 0;
   const msg360 = has360 ? ' (con vista 360°)' : '';
+  const priceMsg = promo
+    ? `$${promo.finalPrice} COP (${promo.pct}% OFF, antes $${promo.orig} COP)`
+    : `$${curProduct.price} COP`;
   const msg = isOut
     ? encodeURIComponent(`Hola! Vi el bolso *${curProduct.name}* y quisiera anotarme para cuando llegue stock 🙏`)
-    : encodeURIComponent(`Hola! Vi el catálogo${msg360} y me interesa el bolso *${curProduct.name}* ($${curProduct.price} COP). ¿Está disponible? 😊`);
+    : encodeURIComponent(`Hola! Vi el catálogo${msg360} y me interesa el bolso *${curProduct.name}* (${priceMsg}). ¿Está disponible? 😊`);
   const waLink = `https://wa.me/${S.waNumber}?text=${msg}`;
   const waBtn = document.getElementById('waBtn');
   waBtn.href = waLink;

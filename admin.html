@@ -1323,7 +1323,7 @@
           <select class="form-control" id="ed-category">
             <option value="Bolso de mano">Bolso de mano</option>
             <option value="Clutch">Clutch</option>
-            <option value="Cartera">Cartera</option>
+            <option value="Crossbody">Cartera</option>
             <option value="Mini Bag">Mini Bag</option>
             <option value="Shoulder">Shoulder</option>
             <option value="Structured">Structured</option>
@@ -1331,8 +1331,34 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Precio USD</label>
-          <input type="number" class="form-control" id="ed-price" min="0" step="0.01" placeholder="0.00" />
+          <label class="form-label">Precio Original (COP)</label>
+          <input type="number" class="form-control" id="ed-price" min="0" step="1" placeholder="40000" oninput="onPromoInput('price')" />
+        </div>
+      </div>
+      <!-- PROMOCIÓN / DESCUENTO -->
+      <div style="background:rgba(140,74,47,.06);border:1px solid rgba(140,74,47,.22);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+        <div class="toggle-row" style="margin-bottom:0;padding:0;border:none;">
+          <div>
+            <div class="toggle-label">🏷️ Activar promoción / descuento</div>
+            <div class="toggle-sub">Tacha el precio original, muestra el % de descuento y el precio final</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="ed-promo-active" onchange="onPromoToggle()" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <div id="promo-fields-wrap" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed rgba(140,74,47,.22);">
+          <div class="form-row" style="margin-bottom:8px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Descuento (%)</label>
+              <input type="number" class="form-control" id="ed-discount" min="1" max="99" step="1" placeholder="Ej: 20" oninput="onPromoInput('pct')" />
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Precio final con descuento (COP)</label>
+              <input type="number" class="form-control" id="ed-promo-price" min="0" step="1" placeholder="Se calcula solo" oninput="onPromoInput('final')" />
+            </div>
+          </div>
+          <div id="promo-live-preview" style="font-size:.82rem;color:#4a3b34;background:#fff;padding:8px 12px;border-radius:8px;border:1px solid var(--gray-light);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"></div>
         </div>
       </div>
       <div class="form-row">
@@ -1547,8 +1573,8 @@ const DEFAULT_DATA = {
     {
       id: 3,
       name: 'Sahara',
-      subtitle: 'Cartera Desert Sand',
-      category: 'Cartera',
+      subtitle: 'Crossbody Desert Sand',
+      category: 'Crossbody',
       badge: null,
       price: 160,
       stock: 5,
@@ -1830,7 +1856,7 @@ function renderProducts() {
           <div class="card-name">${escHtml(p.name)}</div>
           <div class="card-subtitle">${escHtml(p.subtitle || '')}</div>
           <div class="card-meta">
-            <div class="card-price">USD ${formatPrice(p.price)}</div>
+            <div class="card-price">${renderAdminPrice(p)}</div>
             <div class="card-category">${escHtml(p.category || '')}</div>
           </div>
           <div><span class="stock-badge ${sb.cls}">${sb.text}</span></div>
@@ -1847,6 +1873,17 @@ function renderProducts() {
 function formatPrice(p) {
   if (p == null || p === '') return '—';
   return Number(p).toLocaleString('es-AR');
+}
+function renderAdminPrice(p) {
+  const orig = Number(p.price) || 0;
+  const pct = Number(p.discount) || 0;
+  if (orig > 0 && pct > 0 && pct < 100) {
+    const fin = (p.promoPrice != null && Number(p.promoPrice) > 0 && Number(p.promoPrice) < orig)
+      ? Math.round(Number(p.promoPrice))
+      : Math.round(orig * (1 - pct / 100));
+    return `<span style="text-decoration:line-through;color:#888;font-size:.78rem;font-weight:400;margin-right:5px;">$${formatPrice(orig)}</span><span style="background:#c0392b;color:#fff;font-size:.68rem;padding:2px 6px;border-radius:50px;margin-right:5px;vertical-align:middle;">-${Math.round(pct)}%</span><span style="color:#6e3721;font-weight:700;">$${formatPrice(fin)} COP</span>`;
+  }
+  return `$${formatPrice(p.price)} COP`;
 }
 
 function toggleVisible(id) {
@@ -1935,6 +1972,10 @@ function openEditor(id) {
   document.getElementById('ed-subtitle').value = '';
   document.getElementById('ed-category').value = 'Bolso de mano';
   document.getElementById('ed-price').value = '';
+  document.getElementById('ed-promo-active').checked = false;
+  document.getElementById('ed-discount').value = '';
+  document.getElementById('ed-promo-price').value = '';
+  document.getElementById('promo-fields-wrap').style.display = 'none';
   document.getElementById('ed-badge').value = '';
   document.getElementById('ed-badge-custom').value = '';
   document.getElementById('badge-custom-wrap').style.display = 'none';
@@ -1959,6 +2000,18 @@ function openEditor(id) {
       document.getElementById('ed-subtitle').value = p.subtitle || '';
       document.getElementById('ed-category').value = p.category || 'Bolso de mano';
       document.getElementById('ed-price').value = p.price != null ? p.price : '';
+      const hasPromo = (Number(p.discount) || 0) > 0;
+      document.getElementById('ed-promo-active').checked = hasPromo;
+      document.getElementById('promo-fields-wrap').style.display = hasPromo ? '' : 'none';
+      if (hasPromo) {
+        document.getElementById('ed-discount').value = p.discount;
+        const orig = Number(p.price) || 0;
+        const fin = (p.promoPrice != null && Number(p.promoPrice) > 0)
+          ? Math.round(Number(p.promoPrice))
+          : Math.round(orig * (1 - Number(p.discount) / 100));
+        document.getElementById('ed-promo-price').value = fin > 0 ? fin : '';
+      }
+      updatePromoPreview();
       document.getElementById('ed-desc').value = p.desc || '';
       document.getElementById('ed-material').value = (p.material || []).join('\n');
       document.getElementById('ed-dims').value = (p.dims || []).join('\n');
@@ -2017,6 +2070,51 @@ function closeEditor() {
 function onBadgeChange() {
   const val = document.getElementById('ed-badge').value;
   document.getElementById('badge-custom-wrap').style.display = val === '__custom__' ? '' : 'none';
+}
+
+function onPromoToggle() {
+  const on = document.getElementById('ed-promo-active').checked;
+  document.getElementById('promo-fields-wrap').style.display = on ? '' : 'none';
+  if (on && !document.getElementById('ed-discount').value) {
+    document.getElementById('ed-discount').value = 15;
+    onPromoInput('pct');
+  } else {
+    updatePromoPreview();
+  }
+}
+
+function onPromoInput(source) {
+  const orig = parseFloat(document.getElementById('ed-price').value) || 0;
+  const pctEl = document.getElementById('ed-discount');
+  const finEl = document.getElementById('ed-promo-price');
+  if (source === 'pct' || source === 'price') {
+    const pct = parseFloat(pctEl.value) || 0;
+    if (orig > 0 && pct > 0 && pct < 100) {
+      finEl.value = Math.round(orig * (1 - pct / 100));
+    } else if (pct <= 0) {
+      finEl.value = '';
+    }
+  } else if (source === 'final') {
+    const fin = parseFloat(finEl.value) || 0;
+    if (orig > 0 && fin > 0 && fin < orig) {
+      pctEl.value = Math.max(1, Math.min(99, Math.round((1 - fin / orig) * 100)));
+    }
+  }
+  updatePromoPreview();
+}
+
+function updatePromoPreview() {
+  const box = document.getElementById('promo-live-preview');
+  if (!box) return;
+  const orig = parseFloat(document.getElementById('ed-price').value) || 0;
+  const pct = parseFloat(document.getElementById('ed-discount').value) || 0;
+  const fin = parseFloat(document.getElementById('ed-promo-price').value) || Math.round(orig * (1 - pct / 100));
+  if (!orig || pct <= 0 || pct >= 100 || fin <= 0 || fin >= orig) {
+    box.innerHTML = '<span style="color:#865400">Ingresá un precio original y un % de descuento válido (1% a 99%).</span>';
+    return;
+  }
+  const ahorro = Math.round(orig - fin);
+  box.innerHTML = `<span>Vista previa:</span> <span style="text-decoration:line-through;color:#888">$${orig}</span> <span style="background:#c0392b;color:#fff;font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:50px">-${Math.round(pct)}% OFF</span> <strong style="color:#6e3721;font-size:.95rem">$${Math.round(fin)} COP</strong> <span style="color:#1a7a3a;font-size:.75rem">(Ahorra $${ahorro})</span>`;
 }
 
 function onStockTypeChange() {
@@ -2083,8 +2181,24 @@ function saveProduct() {
   const material = document.getElementById('ed-material').value.split('\n').map(l => l.trim()).filter(l => l);
   const dims = document.getElementById('ed-dims').value.split('\n').map(l => l.trim()).filter(l => l);
 
+  // Preservar fotos adicionales si el producto tenía más de 6 fotos en products.js
+  if (editingProductId !== null) {
+    const prevProd = adminData.products.find(x => x.id === editingProductId);
+    if (prevProd && Array.isArray(prevProd.images) && prevProd.images.length > 6) {
+      prevProd.images.slice(6).forEach(u => { if (u) images.push(u); });
+    }
+  }
+
   const priceRaw = document.getElementById('ed-price').value;
   const price = priceRaw !== '' ? parseFloat(priceRaw) : 0;
+
+  const promoActive = document.getElementById('ed-promo-active').checked;
+  const discRaw = parseFloat(document.getElementById('ed-discount').value) || 0;
+  const promoPriceRaw = parseFloat(document.getElementById('ed-promo-price').value) || 0;
+  const discount = (promoActive && discRaw > 0 && discRaw < 100) ? Math.round(discRaw) : 0;
+  const promoPrice = (discount > 0 && promoPriceRaw > 0 && promoPriceRaw < price)
+    ? Math.round(promoPriceRaw)
+    : (discount > 0 ? Math.round(price * (1 - discount / 100)) : null);
 
   const product = {
     id: editingProductId !== null ? editingProductId : getNextId(),
@@ -2093,6 +2207,8 @@ function saveProduct() {
     category: document.getElementById('ed-category').value,
     badge,
     price,
+    discount,
+    promoPrice,
     stock,
     visible: document.getElementById('ed-visible').checked,
     desc: document.getElementById('ed-desc').value.trim(),
@@ -2237,6 +2353,8 @@ function generateProductsJS() {
       category: ${qs(p.category)},
       badge: ${qs(p.badge)},
       price: ${p.price != null ? p.price : 0},
+      discount: ${p.discount ? p.discount : 0},
+      promoPrice: ${p.promoPrice != null ? p.promoPrice : 'null'},
       stock: ${p.stock === null ? 'null' : p.stock},
       visible: ${p.visible ? 'true' : 'false'},
       desc: ${qs(p.desc)},
