@@ -1165,8 +1165,33 @@
                 <input type="text" class="form-control" id="cfg-heroFeaturedName" />
               </div>
               <div class="form-group">
-                <label class="form-label">Precio bolso destacado (USD)</label>
-                <input type="number" class="form-control" id="cfg-heroFeaturedPrice" min="0" />
+                <label class="form-label">Precio bolso destacado (COP)</label>
+                <input type="number" class="form-control" id="cfg-heroFeaturedPrice" min="0" oninput="onHeroPromoInput('price')" />
+              </div>
+            </div>
+            <div style="background:rgba(140,74,47,.06);border:1px solid rgba(140,74,47,.22);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+              <div class="toggle-row" style="margin-bottom:0;padding:0;border:none;">
+                <div>
+                  <div class="toggle-label">🏷️ Rebaja en bolso destacado de portada</div>
+                  <div class="toggle-sub">Tacha el precio en la portada, muestra el % de descuento y el precio final</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="cfg-heroPromoActive" onchange="onHeroPromoToggle()" />
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div id="cfg-hero-promo-wrap" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed rgba(140,74,47,.22);">
+                <div class="form-row" style="margin-bottom:8px;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Descuento (%)</label>
+                    <input type="number" class="form-control" id="cfg-heroFeaturedDiscount" min="1" max="99" step="1" placeholder="Ej: 20" oninput="onHeroPromoInput('pct')" />
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Precio final con descuento (COP)</label>
+                    <input type="number" class="form-control" id="cfg-heroFeaturedPromoPrice" min="0" step="1" placeholder="Se calcula solo" oninput="onHeroPromoInput('final')" />
+                  </div>
+                </div>
+                <div id="cfg-hero-promo-preview" style="font-size:.82rem;color:#4a3b34;background:#fff;padding:8px 12px;border-radius:8px;border:1px solid var(--gray-light);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"></div>
               </div>
             </div>
             <div class="config-save-row">
@@ -1665,10 +1690,14 @@ let confirmCallback = null;
 =================================================== */
 const LOCAL_STORAGE_KEY = 'AMBAR_CATALOG_DATA_V1';
 
+const adminSyncChannel = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('ambar_catalog_sync') : null;
 function persistData(markModified = true) {
   try {
     if (markModified) adminData._savedAt = Date.now();
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(adminData));
+    if (adminSyncChannel) {
+      try { adminSyncChannel.postMessage(adminData); } catch(e) {}
+    }
   } catch(e) {
     console.error('Error al guardar en localStorage:', e);
   }
@@ -1773,6 +1802,9 @@ function renderTopbarActions(view) {
       <button class="btn btn-outline" onclick="window.open('index.html','_blank')" title="Abrir catálogo">
         🌐 Ver Catálogo
       </button>
+      <button class="btn btn-outline" onclick="openQuickPromoModal(null)" title="Gestionar rebajas de todos los precios de la página">
+        🏷️ Rebajas
+      </button>
       <button class="btn btn-outline" onclick="downloadProductsJS()" title="Descargar archivo para hosting">
         ⬇ Descargar products.js
       </button>
@@ -1863,7 +1895,8 @@ function renderProducts() {
           <div><span class="stock-badge ${sb.cls}">${sb.text}</span></div>
           <div class="card-actions">
             <button class="btn btn-outline btn-sm" onclick="openEditor(${p.id})">✏ Editar</button>
-            <button class="btn btn-outline btn-sm" onclick="toggleVisible(${p.id})">${p.visible ? '🙈 Ocultar' : '👁 Mostrar'}</button>
+            <button class="btn btn-outline btn-sm" onclick="openQuickPromoModal(${p.id})" title="Configurar rebaja o precio">${(Number(p.discount)||0)>0 ? `🏷️ -${Math.round(p.discount)}%` : '🏷️ Rebaja'}</button>
+            <button class="btn btn-outline btn-sm" onclick="toggleVisible(${p.id})">${p.visible ? '🙈' : '👁'}</button>
             <button class="btn btn-danger btn-sm" onclick="confirmDelete(${p.id})">🗑</button>
           </div>
         </div>
@@ -2254,6 +2287,66 @@ function populateConfig() {
     const el = document.getElementById('cfg-' + f);
     if (el && s[f] != null) el.value = s[f];
   });
+  const hasHeroPromo = (Number(s.heroFeaturedDiscount) || 0) > 0;
+  const hc = document.getElementById('cfg-heroPromoActive');
+  const hw = document.getElementById('cfg-hero-promo-wrap');
+  const hd = document.getElementById('cfg-heroFeaturedDiscount');
+  const hp = document.getElementById('cfg-heroFeaturedPromoPrice');
+  if (hc && hw && hd && hp) {
+    hc.checked = hasHeroPromo;
+    hw.style.display = hasHeroPromo ? '' : 'none';
+    hd.value = hasHeroPromo ? s.heroFeaturedDiscount : '';
+    const orig = Number(s.heroFeaturedPrice) || 0;
+    const fin = (s.heroFeaturedPromoPrice != null && Number(s.heroFeaturedPromoPrice) > 0)
+      ? Math.round(Number(s.heroFeaturedPromoPrice))
+      : (hasHeroPromo ? Math.round(orig * (1 - Number(s.heroFeaturedDiscount) / 100)) : 0);
+    hp.value = fin > 0 ? fin : '';
+    updateHeroPromoPreview();
+  }
+}
+
+function onHeroPromoToggle() {
+  const on = document.getElementById('cfg-heroPromoActive').checked;
+  document.getElementById('cfg-hero-promo-wrap').style.display = on ? '' : 'none';
+  if (on && !document.getElementById('cfg-heroFeaturedDiscount').value) {
+    document.getElementById('cfg-heroFeaturedDiscount').value = 15;
+    onHeroPromoInput('pct');
+  } else {
+    updateHeroPromoPreview();
+  }
+}
+
+function onHeroPromoInput(source) {
+  const orig = parseFloat(document.getElementById('cfg-heroFeaturedPrice').value) || 0;
+  const pctEl = document.getElementById('cfg-heroFeaturedDiscount');
+  const finEl = document.getElementById('cfg-heroFeaturedPromoPrice');
+  if (source === 'pct' || source === 'price') {
+    const pct = parseFloat(pctEl.value) || 0;
+    if (orig > 0 && pct > 0 && pct < 100) {
+      finEl.value = Math.round(orig * (1 - pct / 100));
+    } else if (pct <= 0) {
+      finEl.value = '';
+    }
+  } else if (source === 'final') {
+    const fin = parseFloat(finEl.value) || 0;
+    if (orig > 0 && fin > 0 && fin < orig) {
+      pctEl.value = Math.max(1, Math.min(99, Math.round((1 - fin / orig) * 100)));
+    }
+  }
+  updateHeroPromoPreview();
+}
+
+function updateHeroPromoPreview() {
+  const box = document.getElementById('cfg-hero-promo-preview');
+  if (!box) return;
+  const orig = parseFloat(document.getElementById('cfg-heroFeaturedPrice').value) || 0;
+  const pct = parseFloat(document.getElementById('cfg-heroFeaturedDiscount').value) || 0;
+  const fin = parseFloat(document.getElementById('cfg-heroFeaturedPromoPrice').value) || Math.round(orig * (1 - pct / 100));
+  if (!orig || pct <= 0 || pct >= 100 || fin <= 0 || fin >= orig) {
+    box.innerHTML = '<span style="color:#865400">Ingresá un precio y un % de descuento válido (1% a 99%).</span>';
+    return;
+  }
+  box.innerHTML = `<span>Vista previa en portada:</span> <span style="text-decoration:line-through;color:#888">$${orig}</span> <span style="background:#c0392b;color:#fff;font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:50px">-${Math.round(pct)}%</span> <strong style="color:#6e3721;font-size:.95rem">$${Math.round(fin)} COP</strong>`;
 }
 
 function saveConfigSection(section) {
@@ -2271,6 +2364,13 @@ function saveConfigSection(section) {
     s.heroImage            = getVal('cfg-heroImage');
     s.heroFeaturedName     = getVal('cfg-heroFeaturedName');
     s.heroFeaturedPrice    = parseFloat(getVal('cfg-heroFeaturedPrice')) || 0;
+    const hOn = document.getElementById('cfg-heroPromoActive')?.checked;
+    const hPct = parseFloat(getVal('cfg-heroFeaturedDiscount')) || 0;
+    const hFin = parseFloat(getVal('cfg-heroFeaturedPromoPrice')) || 0;
+    s.heroFeaturedDiscount = (hOn && hPct > 0 && hPct < 100) ? Math.round(hPct) : 0;
+    s.heroFeaturedPromoPrice = (s.heroFeaturedDiscount > 0 && hFin > 0 && hFin < s.heroFeaturedPrice)
+      ? Math.round(hFin)
+      : (s.heroFeaturedDiscount > 0 ? Math.round(s.heroFeaturedPrice * (1 - s.heroFeaturedDiscount / 100)) : null);
     showToast('Configuración del hero guardada.', 'success');
   } else if (section === 'stats') {
     s.statMaterial      = getVal('cfg-statMaterial');
@@ -2395,6 +2495,8 @@ window.CATALOG_DATA = {
     heroImage: ${qs(s.heroImage)},
     heroFeaturedName: ${qs(s.heroFeaturedName)},
     heroFeaturedPrice: ${s.heroFeaturedPrice != null ? s.heroFeaturedPrice : 0},
+    heroFeaturedDiscount: ${s.heroFeaturedDiscount ? s.heroFeaturedDiscount : 0},
+    heroFeaturedPromoPrice: ${s.heroFeaturedPromoPrice != null ? s.heroFeaturedPromoPrice : 'null'},
     statMaterial: ${qs(s.statMaterial)},
     statMaterialLabel: ${qs(s.statMaterialLabel)},
     statClients: ${qs(s.statClients)},
@@ -2812,6 +2914,168 @@ renderTopbarActions = function(view) {
 
 // La publicación automática se activa después de cargar (no al abrir el admin)
 document.addEventListener('DOMContentLoaded', () => setTimeout(() => { ghAutoReady = true; }, 0));
+
+
+/* ===================================================
+   GESTOR RÁPIDO DE REBAJAS Y PRECIOS (TIEMPO REAL)
+=================================================== */
+function openQuickPromoModal(focusProductId) {
+  let ov = document.getElementById('quick-promo-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'quick-promo-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px;';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
+  }
+  const s = adminData.settings || {};
+  const hOrig = Number(s.heroFeaturedPrice) || 0;
+  const hPct  = Number(s.heroFeaturedDiscount) || 0;
+  const hFin  = (s.heroFeaturedPromoPrice != null && Number(s.heroFeaturedPromoPrice) > 0)
+    ? Math.round(Number(s.heroFeaturedPromoPrice))
+    : (hPct > 0 ? Math.round(hOrig * (1 - hPct / 100)) : '');
+
+  const rowsHtml = adminData.products.map(p => {
+    const orig = Number(p.price) || 0;
+    const pct  = Number(p.discount) || 0;
+    const fin  = (p.promoPrice != null && Number(p.promoPrice) > 0)
+      ? Math.round(Number(p.promoPrice))
+      : (pct > 0 ? Math.round(orig * (1 - pct / 100)) : '');
+    const highlight = focusProductId === p.id ? 'background:#fdf6f0;border-color:var(--terracotta);' : '';
+    return `
+      <div class="qp-row" data-id="${p.id}" style="display:grid;grid-template-columns:minmax(120px,1.3fr) 1fr .8fr 1fr auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--gray-light);border-radius:8px;margin-bottom:6px;${highlight}">
+        <div style="font-weight:600;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(p.name)}</div>
+        <input type="number" class="form-control qp-orig" value="${orig}" min="0" placeholder="Precio" oninput="onQpRowInput(this,'orig')" style="padding:6px 8px;font-size:.82rem;" />
+        <input type="number" class="form-control qp-pct" value="${pct > 0 ? pct : ''}" min="0" max="99" placeholder="% Off" oninput="onQpRowInput(this,'pct')" style="padding:6px 8px;font-size:.82rem;" />
+        <input type="number" class="form-control qp-fin" value="${fin}" min="0" placeholder="Final" oninput="onQpRowInput(this,'fin')" style="padding:6px 8px;font-size:.82rem;" />
+        <button type="button" class="btn btn-outline btn-sm" onclick="clearQpRow(this)" title="Quitar rebaja" style="padding:5px 8px;">✕</button>
+      </div>`;
+  }).join('');
+
+  ov.innerHTML = `
+    <div style="background:#fff;border-radius:14px;max-width:720px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.32);">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--gray-light);display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h3 style="margin:0;font-size:1.1rem;">🏷️ Precios y Rebajas en Tiempo Real</h3>
+          <p style="margin:2px 0 0;font-size:.78rem;color:var(--gray);">Modificá el precio original, el % de descuento o el precio final de cualquier bolso de la página.</p>
+        </div>
+        <button class="editor-close" onclick="document.getElementById('quick-promo-overlay').style.display='none'">✕</button>
+      </div>
+      <div style="padding:14px 20px;overflow-y:auto;flex:1;">
+        <!-- Rebaja masiva rápida -->
+        <div style="background:#faf5ef;border:1px solid var(--gray-light);border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:.8rem;font-weight:600;">⚡ Aplicar descuento a todos:</span>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="applyBulkPct(10)">-10%</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="applyBulkPct(15)">-15%</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="applyBulkPct(20)">-20%</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="applyBulkPct(30)">-30%</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="applyBulkPct(50)">-50%</button>
+            <button type="button" class="btn btn-outline btn-sm" style="color:#c0392b" onclick="applyBulkPct(0)">Quitar todas</button>
+          </div>
+        </div>
+        <!-- Encabezados -->
+        <div style="display:grid;grid-template-columns:minmax(120px,1.3fr) 1fr .8fr 1fr auto;gap:8px;padding:0 10px 6px;font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--gray);letter-spacing:.06em;">
+          <div>Bolso</div>
+          <div>Precio Orig.</div>
+          <div>% Desc.</div>
+          <div>Precio Final</div>
+          <div></div>
+        </div>
+        <!-- Bolso destacado de la portada -->
+        <div class="qp-row" data-hero="1" style="display:grid;grid-template-columns:minmax(120px,1.3fr) 1fr .8fr 1fr auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid rgba(140,74,47,.35);background:rgba(140,74,47,.06);border-radius:8px;margin-bottom:10px;">
+          <div style="font-weight:700;font-size:.82rem;color:var(--terracotta);">⭐ Portada: ${escHtml(s.heroFeaturedName || 'Destacado')}</div>
+          <input type="number" class="form-control qp-orig" value="${hOrig}" min="0" oninput="onQpRowInput(this,'orig')" style="padding:6px 8px;font-size:.82rem;" />
+          <input type="number" class="form-control qp-pct" value="${hPct > 0 ? hPct : ''}" min="0" max="99" placeholder="% Off" oninput="onQpRowInput(this,'pct')" style="padding:6px 8px;font-size:.82rem;" />
+          <input type="number" class="form-control qp-fin" value="${hFin}" min="0" placeholder="Final" oninput="onQpRowInput(this,'fin')" style="padding:6px 8px;font-size:.82rem;" />
+          <button type="button" class="btn btn-outline btn-sm" onclick="clearQpRow(this)" title="Quitar rebaja" style="padding:5px 8px;">✕</button>
+        </div>
+        <!-- Lista de productos -->
+        ${rowsHtml}
+      </div>
+      <div style="padding:14px 20px;border-top:1px solid var(--gray-light);display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn btn-outline" onclick="document.getElementById('quick-promo-overlay').style.display='none'">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveQuickPromoModal()">💾 Guardar todos los precios y rebajas</button>
+      </div>
+    </div>`;
+  ov.style.display = 'flex';
+  if (focusProductId !== null) {
+    const targetRow = ov.querySelector(`.qp-row[data-id="${focusProductId}"] .qp-pct`);
+    if (targetRow) setTimeout(() => { targetRow.focus(); targetRow.select(); }, 60);
+  }
+}
+
+function onQpRowInput(inputEl, mode) {
+  const row = inputEl.closest('.qp-row');
+  const origEl = row.querySelector('.qp-orig');
+  const pctEl  = row.querySelector('.qp-pct');
+  const finEl  = row.querySelector('.qp-fin');
+  const orig = parseFloat(origEl.value) || 0;
+  if (mode === 'orig' || mode === 'pct') {
+    const pct = parseFloat(pctEl.value) || 0;
+    if (orig > 0 && pct > 0 && pct < 100) {
+      finEl.value = Math.round(orig * (1 - pct / 100));
+    } else if (pct <= 0) {
+      finEl.value = '';
+    }
+  } else if (mode === 'fin') {
+    const fin = parseFloat(finEl.value) || 0;
+    if (orig > 0 && fin > 0 && fin < orig) {
+      pctEl.value = Math.max(1, Math.min(99, Math.round((1 - fin / orig) * 100)));
+    } else if (!fin || fin >= orig) {
+      pctEl.value = '';
+    }
+  }
+}
+
+function clearQpRow(btn) {
+  const row = btn.closest('.qp-row');
+  row.querySelector('.qp-pct').value = '';
+  row.querySelector('.qp-fin').value = '';
+}
+
+function applyBulkPct(pct) {
+  const ov = document.getElementById('quick-promo-overlay');
+  if (!ov) return;
+  ov.querySelectorAll('.qp-row').forEach(row => {
+    const pctEl = row.querySelector('.qp-pct');
+    pctEl.value = pct > 0 ? pct : '';
+    onQpRowInput(pctEl, 'pct');
+  });
+}
+
+function saveQuickPromoModal() {
+  const ov = document.getElementById('quick-promo-overlay');
+  if (!ov) return;
+  ov.querySelectorAll('.qp-row').forEach(row => {
+    const orig = Math.max(0, parseFloat(row.querySelector('.qp-orig').value) || 0);
+    const pctRaw = parseFloat(row.querySelector('.qp-pct').value) || 0;
+    const finRaw = parseFloat(row.querySelector('.qp-fin').value) || 0;
+    const discount = (pctRaw > 0 && pctRaw < 100) ? Math.round(pctRaw) : 0;
+    const promoPrice = (discount > 0 && finRaw > 0 && finRaw < orig)
+      ? Math.round(finRaw)
+      : (discount > 0 ? Math.round(orig * (1 - discount / 100)) : null);
+
+    if (row.getAttribute('data-hero') === '1') {
+      adminData.settings.heroFeaturedPrice = orig;
+      adminData.settings.heroFeaturedDiscount = discount;
+      adminData.settings.heroFeaturedPromoPrice = promoPrice;
+    } else {
+      const id = Number(row.getAttribute('data-id'));
+      const prod = adminData.products.find(x => x.id === id);
+      if (prod) {
+        prod.price = orig;
+        prod.discount = discount;
+        prod.promoPrice = promoPrice;
+      }
+    }
+  });
+  persistData();
+  renderProducts();
+  populateConfig();
+  ov.style.display = 'none';
+  showToast('✓ Precios y rebajas actualizados en tiempo real.', 'success');
+}
 
 document.addEventListener('DOMContentLoaded', init);
 </script>

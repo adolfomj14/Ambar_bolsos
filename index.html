@@ -116,7 +116,10 @@
     .hero-image:hover img { transform: scale(1.05); }
     .hero-badge { position: absolute; bottom: clamp(1.2rem, 2.8vh, 2rem); left: clamp(1.2rem, 2.5vw, 2rem); background: rgba(245,238,230,.94); backdrop-filter: blur(8px); padding: clamp(.7rem, 1.4vh, 1rem) clamp(1rem, 2vw, 1.4rem); border-left: 3px solid var(--gold); border-radius: 2px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
     .hero-badge p  { font-size: .7rem; letter-spacing: .15em; text-transform: uppercase; color: var(--gray); margin-bottom: .25rem; }
-    .hero-badge strong { font-family: var(--font-serif); font-size: clamp(.95rem, 1.1vw, 1.1rem); }
+    .hero-badge strong { font-family: var(--font-serif); font-size: clamp(.95rem, 1.1vw, 1.1rem); display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
+    .hero-price-old { font-family: var(--font-sans); font-size: .8rem; color: var(--gray); text-decoration: line-through; font-weight: 400; opacity: .85; }
+    .hero-discount-pill { font-family: var(--font-sans); font-size: .66rem; font-weight: 700; color: #fff; background: #c0392b; padding: .12rem .45rem; border-radius: 50px; letter-spacing: .04em; }
+    .hero-price-final { color: var(--terracotta-dark); font-weight: 700; }
 
     /* Indicador sutil de desplazamiento integrado */
     .scroll-indicator {
@@ -739,35 +742,80 @@
 ================================================================ -->
 <script src="products.js"></script>
 <script>
-/* ─── DATOS: desde products.js + cambios recientes del Admin (sin datos de relleno) ─── */
+/* ─── DATOS: desde products.js + cambios en tiempo real del Admin (sin datos de relleno) ─── */
 const LOCAL_STORAGE_KEY = 'AMBAR_CATALOG_DATA_V1';
-let savedAdminData = null;
-try {
-  const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-  if (raw) savedAdminData = JSON.parse(raw);
-} catch(e) {}
+let S = {};
+let RAW_PRODUCTS = [];
+let products = [];
 
-const fileCatalog = (window.CATALOG_DATA && typeof window.CATALOG_DATA === 'object') ? window.CATALOG_DATA : null;
-const localTime = (savedAdminData && savedAdminData._savedAt) ? Number(savedAdminData._savedAt) : 0;
-const fileTime  = (fileCatalog && fileCatalog._savedAt) ? Number(fileCatalog._savedAt) : 0;
+function loadActiveCatalog(incomingData) {
+  let savedAdminData = incomingData || null;
+  if (!savedAdminData) {
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (raw) savedAdminData = JSON.parse(raw);
+    } catch(e) {}
+  }
+  const fileCatalog = (window.CATALOG_DATA && typeof window.CATALOG_DATA === 'object') ? window.CATALOG_DATA : null;
+  const localTime = (savedAdminData && savedAdminData._savedAt) ? Number(savedAdminData._savedAt) : 0;
+  const fileTime  = (fileCatalog && fileCatalog._savedAt) ? Number(fileCatalog._savedAt) : 0;
 
-// Usa los cambios recién guardados en el Admin si son más nuevos que products.js; si no, usa products.js
-const activeCatalog = (savedAdminData && Array.isArray(savedAdminData.products) && localTime > fileTime)
-  ? savedAdminData
-  : (fileCatalog || savedAdminData || {});
+  const activeCatalog = (savedAdminData && Array.isArray(savedAdminData.products) && localTime >= fileTime)
+    ? savedAdminData
+    : (fileCatalog || savedAdminData || {});
 
-const S = activeCatalog.settings || {};
-const RAW_PRODUCTS = Array.isArray(activeCatalog.products) ? activeCatalog.products : [];
-// Only show visible products
-let products = RAW_PRODUCTS.filter(p => p.visible !== false);
+  S = activeCatalog.settings || {};
+  RAW_PRODUCTS = Array.isArray(activeCatalog.products) ? activeCatalog.products : [];
+  products = RAW_PRODUCTS.filter(p => p.visible !== false);
+}
+loadActiveCatalog();
 
-// Si el admin está abierto en otra pestaña y guarda un cambio, actualizar al instante
+function refreshLiveCatalog(incomingData) {
+  loadActiveCatalog(incomingData);
+  applySettings();
+  renderCards();
+  if (curProduct && document.getElementById('modal').classList.contains('open')) {
+    const updated = products.find(p => p.id === curProduct.id);
+    if (updated) openModal(updated.id);
+  }
+}
+
+// Sincronización en tiempo real entre el Admin y el Catálogo
 window.addEventListener('storage', e => {
-  if (e.key === LOCAL_STORAGE_KEY) location.reload();
+  if (e.key === LOCAL_STORAGE_KEY) refreshLiveCatalog();
 });
+window.addEventListener('focus', () => refreshLiveCatalog());
+if (typeof BroadcastChannel !== 'undefined') {
+  try {
+    const syncChannel = new BroadcastChannel('ambar_catalog_sync');
+    syncChannel.onmessage = ev => {
+      if (ev && ev.data) refreshLiveCatalog(ev.data);
+    };
+  } catch(e) {}
+}
 
 // Devuelve el valor tal cual o vacío (nunca muestra "undefined" ni textos de relleno)
 const val = v => (v === undefined || v === null) ? '' : String(v);
+
+function getHeroPromo() {
+  const orig = Number(S.heroFeaturedPrice) || 0;
+  let pct = Number(S.heroFeaturedDiscount) || 0;
+  let promoP = S.heroFeaturedPromoPrice != null ? Number(S.heroFeaturedPromoPrice) : 0;
+
+  // Si en Hero no se configuró descuento propio pero el bolso destacado coincide con un producto rebajado, usar su rebaja
+  if (pct <= 0 && S.heroFeaturedName) {
+    const match = RAW_PRODUCTS.find(p => (p.name || '').trim().toLowerCase() === String(S.heroFeaturedName).trim().toLowerCase());
+    if (match && Number(match.discount) > 0) {
+      const mp = getPromo(match);
+      if (mp) return mp;
+    }
+  }
+  if (orig <= 0 || pct <= 0 || pct >= 100) return null;
+  const finalPrice = (promoP > 0 && promoP < orig)
+    ? Math.round(promoP)
+    : Math.round(orig * (1 - pct / 100));
+  return { orig, pct: Math.round(pct), finalPrice };
+}
 
 /* ─── APPLY SETTINGS TO DOM ─────────────────────────────────────── */
 function applySettings() {
@@ -791,14 +839,19 @@ function applySettings() {
   document.getElementById('heroSubtitle').textContent = val(S.heroSubtitle);
   const heroImg = document.getElementById('heroImg');
   if (S.heroImage) {
-    heroImg.src = S.heroImage;
+    heroImg.src = S.heroImage.replace(/\\/g, '/');
     heroImg.style.visibility = 'visible';
   }
   heroImg.alt = val(S.heroFeaturedName);
   const badgeName  = val(S.heroFeaturedName);
   const badgePrice = val(S.heroFeaturedPrice);
-  document.getElementById('heroBadgeText').textContent =
-    badgeName + (badgePrice ? `${badgeName ? ' · ' : ''}$${badgePrice} COP` : '');
+  const heroPromo  = getHeroPromo();
+  const badgeEl    = document.getElementById('heroBadgeText');
+  if (heroPromo) {
+    badgeEl.innerHTML = `${badgeName ? `${badgeName} · ` : ''}<span class="hero-price-old">$${heroPromo.orig}</span> <span class="hero-discount-pill">-${heroPromo.pct}%</span> <span class="hero-price-final">$${heroPromo.finalPrice} COP</span>`;
+  } else {
+    badgeEl.textContent = badgeName + (badgePrice ? `${badgeName ? ' · ' : ''}$${badgePrice} COP` : '');
+  }
   const heroBadge = document.querySelector('.hero-badge');
   if (heroBadge) heroBadge.style.display = (badgeName || badgePrice) ? '' : 'none';
   document.getElementById('heroCta2').href = wa;
