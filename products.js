@@ -1,7 +1,7 @@
 /**
  * ÁMBAR — Bolsos & Carteras
  * Generado por el Panel de Administración ÁMBAR
- * Fecha: 4/11/2026, 07:48:40
+ * Fecha: 4/11/2026, 07:53:25
  *
  * Para actualizar el catálogo:
  * 1. Descargá este archivo
@@ -9,6 +9,7 @@
  */
 
 window.CATALOG_DATA = {
+  _savedAt: 1793840003509,
   settings: {
     brandName: "ÁMBAR",
     tagline: "Colección 2026",
@@ -42,8 +43,8 @@ window.CATALOG_DATA = {
       category: "Bolso de mano",
       badge: "Más Vendido",
       price: 40000,
-      discount: 25,
-      promoPrice: 30000,
+      discount: 0,
+      promoPrice: null,
       stock: 2,
       visible: true,
       desc: "Bolso de cuerina negra texturizada con hebilla dorada, acompañado de monedero a juego, cadena corta de mano y correa ajustable. Un diseño versátil y elegante para complementar tus looks.",
