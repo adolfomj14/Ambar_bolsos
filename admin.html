@@ -1037,7 +1037,7 @@
       </div>
 
       <div class="nav-section-label" style="margin-top:24px;">Catálogo</div>
-      <div class="nav-item external" onclick="window.open('catalogo.html','_blank')">
+      <div class="nav-item external" onclick="window.open('index.html','_blank')">
         <span class="nav-icon">🌐</span> Ver Catálogo
       </div>
       <div class="nav-item" onclick="triggerImport()">
@@ -1665,8 +1665,9 @@ let confirmCallback = null;
 =================================================== */
 const LOCAL_STORAGE_KEY = 'AMBAR_CATALOG_DATA_V1';
 
-function persistData() {
+function persistData(markModified = true) {
   try {
+    if (markModified) adminData._savedAt = Date.now();
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(adminData));
   } catch(e) {
     console.error('Error al guardar en localStorage:', e);
@@ -1677,32 +1678,32 @@ function persistData() {
    INIT
 =================================================== */
 function init() {
-  // En Netlify / servidor web, siempre priorizamos window.CATALOG_DATA fresco recién traído de products.js
   let savedLocal = null;
-  const isLocalFile = window.location.protocol === 'file:';
-  if (isLocalFile) {
-    try {
-      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (raw) savedLocal = JSON.parse(raw);
-    } catch(e) {
-      console.warn('No se pudo leer localStorage:', e);
-    }
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (raw) savedLocal = JSON.parse(raw);
+  } catch(e) {
+    console.warn('No se pudo leer localStorage:', e);
   }
 
-  if (window.CATALOG_DATA && !isLocalFile) {
-    adminData = JSON.parse(JSON.stringify(window.CATALOG_DATA));
+  const fileData = window.CATALOG_DATA || null;
+  const localTime = (savedLocal && savedLocal._savedAt) ? Number(savedLocal._savedAt) : 0;
+  const fileTime  = (fileData && fileData._savedAt) ? Number(fileData._savedAt) : 0;
+
+  // Si hay cambios guardados en este navegador más recientes que products.js, conservarlos
+  if (savedLocal && savedLocal.products && savedLocal.products.length && localTime > fileTime) {
+    adminData = savedLocal;
     adminData.settings = Object.assign({}, DEFAULT_DATA.settings, adminData.settings);
-    persistData();
+  } else if (fileData && fileData.products) {
+    adminData = JSON.parse(JSON.stringify(fileData));
+    adminData.settings = Object.assign({}, DEFAULT_DATA.settings, adminData.settings);
+    persistData(false);
   } else if (savedLocal && savedLocal.products && savedLocal.products.length) {
     adminData = savedLocal;
     adminData.settings = Object.assign({}, DEFAULT_DATA.settings, adminData.settings);
-  } else if (window.CATALOG_DATA) {
-    adminData = JSON.parse(JSON.stringify(window.CATALOG_DATA));
-    adminData.settings = Object.assign({}, DEFAULT_DATA.settings, adminData.settings);
-    persistData();
   } else {
     adminData = JSON.parse(JSON.stringify(DEFAULT_DATA));
-    persistData();
+    persistData(false);
   }
 
   // Check session
@@ -1769,7 +1770,7 @@ function renderTopbarActions(view) {
   const el = document.getElementById('topbar-actions');
   if (view === 'products') {
     el.innerHTML = `
-      <button class="btn btn-outline" onclick="window.open('catalogo.html','_blank')" title="Abrir catálogo">
+      <button class="btn btn-outline" onclick="window.open('index.html','_blank')" title="Abrir catálogo">
         🌐 Ver Catálogo
       </button>
       <button class="btn btn-outline" onclick="downloadProductsJS()" title="Descargar archivo para hosting">
@@ -1780,7 +1781,7 @@ function renderTopbarActions(view) {
       </button>`;
   } else if (view === 'config') {
     el.innerHTML = `
-      <button class="btn btn-outline" onclick="window.open('catalogo.html','_blank')">
+      <button class="btn btn-outline" onclick="window.open('index.html','_blank')">
         🌐 Ver Catálogo
       </button>
       <button class="btn btn-outline" onclick="downloadProductsJS()">
@@ -2384,6 +2385,7 @@ ${imgs360}
  */
 
 window.CATALOG_DATA = {
+  _savedAt: ${adminData._savedAt || Date.now()},
   settings: {
     brandName: ${qs(s.brandName)},
     tagline: ${qs(s.tagline)},
@@ -2647,9 +2649,9 @@ function ghSchedulePublish() {
 
 // Cada vez que el admin guarda algo, se programa la publicación automática
 const _persistDataOriginal = persistData;
-persistData = function() {
-  _persistDataOriginal();
-  ghSchedulePublish();
+persistData = function(markModified = true) {
+  _persistDataOriginal(markModified);
+  if (markModified) ghSchedulePublish();
 };
 
 /* ---------- Subir fotos (comprimidas) ---------- */

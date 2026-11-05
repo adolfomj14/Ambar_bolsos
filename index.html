@@ -739,12 +739,32 @@
 ================================================================ -->
 <script src="products.js"></script>
 <script>
-/* ─── DATOS: ÚNICAMENTE desde products.js (sin información predeterminada) ─── */
-const CATALOG_LOADED = !!(window.CATALOG_DATA && typeof window.CATALOG_DATA === 'object');
-const S = (CATALOG_LOADED && window.CATALOG_DATA.settings) ? window.CATALOG_DATA.settings : {};
-const RAW_PRODUCTS = (CATALOG_LOADED && Array.isArray(window.CATALOG_DATA.products)) ? window.CATALOG_DATA.products : [];
+/* ─── DATOS: desde products.js + cambios recientes del Admin (sin datos de relleno) ─── */
+const LOCAL_STORAGE_KEY = 'AMBAR_CATALOG_DATA_V1';
+let savedAdminData = null;
+try {
+  const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (raw) savedAdminData = JSON.parse(raw);
+} catch(e) {}
+
+const fileCatalog = (window.CATALOG_DATA && typeof window.CATALOG_DATA === 'object') ? window.CATALOG_DATA : null;
+const localTime = (savedAdminData && savedAdminData._savedAt) ? Number(savedAdminData._savedAt) : 0;
+const fileTime  = (fileCatalog && fileCatalog._savedAt) ? Number(fileCatalog._savedAt) : 0;
+
+// Usa los cambios recién guardados en el Admin si son más nuevos que products.js; si no, usa products.js
+const activeCatalog = (savedAdminData && Array.isArray(savedAdminData.products) && localTime > fileTime)
+  ? savedAdminData
+  : (fileCatalog || savedAdminData || {});
+
+const S = activeCatalog.settings || {};
+const RAW_PRODUCTS = Array.isArray(activeCatalog.products) ? activeCatalog.products : [];
 // Only show visible products
 let products = RAW_PRODUCTS.filter(p => p.visible !== false);
+
+// Si el admin está abierto en otra pestaña y guarda un cambio, actualizar al instante
+window.addEventListener('storage', e => {
+  if (e.key === LOCAL_STORAGE_KEY) location.reload();
+});
 
 // Devuelve el valor tal cual o vacío (nunca muestra "undefined" ni textos de relleno)
 const val = v => (v === undefined || v === null) ? '' : String(v);
