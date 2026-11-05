@@ -1,7 +1,7 @@
 /**
  * ÁMBAR — Bolsos & Carteras
  * Generado por el Panel de Administración ÁMBAR
- * Fecha: 4/11/2026, 07:55:14
+ * Fecha: 4/11/2026, 08:06:24
  *
  * Para actualizar el catálogo:
  * 1. Descargá este archivo
@@ -9,7 +9,7 @@
  */
 
 window.CATALOG_DATA = {
-  _savedAt: 1793840113224,
+  _savedAt: 1793840782856,
   settings: {
     brandName: "ÁMBAR",
     tagline: "Colección 2026",
@@ -18,7 +18,9 @@ window.CATALOG_DATA = {
     heroSubtitle: "Estilo y practicidad en uno.",
     heroImage: "assets\\bolsos\\BOLSO NE1.jpg",
     heroFeaturedName: "Noir",
-    heroFeaturedPrice: 30000,
+    heroFeaturedPrice: 40000,
+    heroFeaturedDiscount: 25,
+    heroFeaturedPromoPrice: 30000,
     statMaterial: "100%",
     statMaterialLabel: "Confección Premium",
     statClients: "+500",
