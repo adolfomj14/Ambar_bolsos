@@ -1,7 +1,7 @@
 /**
  * ÁMBAR — Bolsos & Carteras
  * Generado por el Panel de Administración ÁMBAR
- * Fecha: 9/11/2026, 12:53:52
+ * Fecha: 9/11/2026, 06:29:16
  *
  * Para actualizar el catálogo:
  * 1. Descargá este archivo
@@ -9,7 +9,7 @@
  */
 
 window.CATALOG_DATA = {
-  _savedAt: 1794246809673,
+  _savedAt: 1794266952049,
   settings: {
     brandName: "ÁMBAR",
     tagline: "Colección 2026",
@@ -376,7 +376,7 @@ window.CATALOG_DATA = {
       discount: 0,
       promoPrice: null,
       stock: null,
-      visible: true,
+      visible: false,
       desc: "Este bolso destaca por su elegante solapa de diseño curvo y herrajes dorados que le dan un toque muy chic. Por dentro es súper práctico: cuenta con tres compartimentos amplios y un bolsillo central con cierre, ideal para llevar tus monedas u objetos pequeños seguros. ¡Comodidad, tendencia y elegancia en un solo lugar!",
       material: [
         "Cuerina texturizada"
