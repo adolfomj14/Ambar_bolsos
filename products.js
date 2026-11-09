@@ -1,7 +1,7 @@
 /**
  * ÁMBAR — Bolsos & Carteras
  * Generado por el Panel de Administración ÁMBAR
- * Fecha: 4/11/2026, 08:08:25
+ * Fecha: 9/11/2026, 12:53:52
  *
  * Para actualizar el catálogo:
  * 1. Descargá este archivo
@@ -9,7 +9,7 @@
  */
 
 window.CATALOG_DATA = {
-  _savedAt: 1793840782856,
+  _savedAt: 1794246809673,
   settings: {
     brandName: "ÁMBAR",
     tagline: "Colección 2026",
@@ -206,7 +206,7 @@ window.CATALOG_DATA = {
       discount: 0,
       promoPrice: null,
       stock: null,
-      visible: true,
+      visible: false,
       desc: "Este bolso estructurado y acolchado es perfecto para destacar en cualquier ocasión. Cuenta con un compartimento principal amplio y cómodo para llevar lo esencial. Además, incluye su correa ajustable y viene acompañado de una hermosa pañoleta estampada que le aporta un estilo sofisticado y moderno. ¡El accesorio ideal para elevar tus looks!",
       material: [
         "Cuerina texturizada"
