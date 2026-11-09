@@ -1,7 +1,7 @@
 /**
  * ÁMBAR — Bolsos & Carteras
  * Generado por el Panel de Administración ÁMBAR
- * Fecha: 9/11/2026, 12:53:31
+ * Fecha: 9/11/2026, 12:53:35
  *
  * Para actualizar el catálogo:
  * 1. Descargá este archivo
