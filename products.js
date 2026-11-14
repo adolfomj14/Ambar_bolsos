@@ -1,7 +1,7 @@
 /**
  * ÁMBAR — Bolsos & Carteras
  * Generado por el Panel de Administración ÁMBAR
- * Fecha: 9/11/2026, 06:29:13
+ * Fecha: 13/11/2026, 11:49:58
  *
  * Para actualizar el catálogo:
  * 1. Descargá este archivo
@@ -9,7 +9,7 @@
  */
 
 window.CATALOG_DATA = {
-  _savedAt: 1794266952049,
+  _savedAt: 1794631796528,
   settings: {
     brandName: "ÁMBAR",
     tagline: "Colección 2026",
@@ -175,7 +175,7 @@ window.CATALOG_DATA = {
       discount: 0,
       promoPrice: null,
       stock: null,
-      visible: true,
+      visible: false,
       desc: "Este bolso tipo baúl destaca por su diseño estructurado y sofisticado, ideal para darle un toque chic a cualquier look. Por dentro es súper práctico: cuenta con tres compartimentos amplios y un bolsillo secreto en el medio, perfecto para mantener tus monedas o pequeños objetos seguros y ordenados. ¡Elegancia y funcionalidad en un solo accesorio!",
       material: [
         "Cuerina texturizada"
